@@ -38,11 +38,11 @@ public class Client {
             c.tb_host.setDisable(true);
             c.tb_port.setDisable(true);
 
-            out = new ObjectOutputStream(server.getOutputStream());
             //Nicknames cant contain Spaces!
             sendMessage(1, "REG");
 
 
+            //TODO: Change to same design as server
             incoming = new Thread(() -> {
                 try {
                     ObjectInputStream in = new ObjectInputStream(server.getInputStream());
@@ -54,7 +54,6 @@ public class Client {
                         if (msg.length < 3) throw new Exception("Unfertige Nachricht angekommen");
                         switch (msg[0]) {
                             case "MSG":
-                                //TODO: Remove
                                 String addtolv = "[" + msg[1] + "] " + msg[2];
                                 ObservableList<String> oldlist = c.lv_msg.getItems();
                                 oldlist.add(addtolv);
@@ -86,15 +85,10 @@ public class Client {
         String[] temp = {type == 0 ? "MSG" : "CMD", nickname, msg};
 
 
-        if (type == 0) {
-            String addtolv = "[" + nickname + "] " + msg;
-            ObservableList<String> oldlist = c.lv_msg.getItems();
-            oldlist.add(addtolv);
-            c.lv_msg.setItems(oldlist);
-        }
-
         try {
 
+            out = new ObjectOutputStream(server.getOutputStream());
+            out.flush();
             out.writeObject(temp);
             out.flush();
 
