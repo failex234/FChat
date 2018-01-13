@@ -19,7 +19,7 @@ public class Client {
     ObjectOutputStream out;
     MainGUIController c;
 
-    //TODO Client registrieren mit CMD!
+    //TODO Check ob Verbindung getrennt ist
     public Client(String hostaddress, int port, MainGUIController c) {
         this.c = c;
         try {
@@ -41,34 +41,7 @@ public class Client {
             //Nicknames cant contain Spaces!
             sendMessage(1, "REG");
 
-
-            //TODO: Change to same design as server
-            incoming = new Thread(() -> {
-                try {
-                    ObjectInputStream in = new ObjectInputStream(server.getInputStream());
-                    Object inobj = in.readObject();
-
-                    if (inobj instanceof String[]) {
-                        String[] msg = (String[]) inobj;
-                        if (msg.length == 0) throw new Exception("Leerer Nachrichteninhalt!");
-                        if (msg.length < 3) throw new Exception("Unfertige Nachricht angekommen");
-                        switch (msg[0]) {
-                            case "MSG":
-                                String addtolv = "[" + msg[1] + "] " + msg[2];
-                                ObservableList<String> oldlist = c.lv_msg.getItems();
-                                oldlist.add(addtolv);
-                                c.lv_msg.setItems(oldlist);
-                                break;
-                            case "CMD":
-                                //TODO: Befehle schreiben
-                                break;
-                        }
-                    }
-                } catch (Exception e) {
-                    printException(e);
-                }
-            });
-
+            incoming = new Thread(new ClientThread());
             incoming.start();
 
         } catch (UnknownHostException e) {
@@ -104,4 +77,49 @@ public class Client {
         String trace = sw.toString();
         MainGUI.alert("Fehler", "Fehler", "Es hab einen Fehler, bitte das hier melden:\n" + trace, Alert.AlertType.ERROR);
     }
+
+
+    class ClientThread implements Runnable {
+
+        @Override
+        public void run() {
+            while (!Thread.currentThread().isInterrupted()) {
+                try {
+                    ObjectInputStream in = new ObjectInputStream(server.getInputStream());
+                    Object inobj = in.readObject();
+
+                    if (inobj instanceof String[]) {
+                        String[] msg = (String[]) inobj;
+                        if (msg.length == 0) throw new Exception("Leerer Nachrichteninhalt!");
+                        if (msg.length < 3) throw new Exception("Unfertige Nachricht angekommen");
+                        switch (msg[0]) {
+                            case "MSG":
+                                if (!msg[1].isEmpty()) {
+                                    String addtolv = "[" + msg[1] + "] " + msg[2];
+                                    ObservableList<String> oldlist = c.lv_msg.getItems();
+                                    oldlist.add(addtolv);
+                                    c.lv_msg.setItems(oldlist);
+                                } else {
+                                    String addtolv = "*** " + msg[2] + " ***";
+                                    ObservableList<String> oldlist = c.lv_msg.getItems();
+                                    oldlist.add(addtolv);
+                                    c.lv_msg.setItems(oldlist);
+                                }
+                                break;
+                            case "CMD":
+                                //TODO: Befehle schreiben
+                                break;
+                        }
+                    }
+                } catch (Exception e) {
+                    if (e instanceof IllegalStateException) {
+                        //Not on FX application thread
+                    } else {
+                        printException(e);
+                    }
+                }
+            }
+        }
+    }
+
 }

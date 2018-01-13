@@ -5,13 +5,11 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Server {
 
-    //TODO: Clients registrieren lassen mit CMD
     ServerSocket mainserver;
     Thread serverthread = null;
     int port;
@@ -26,6 +24,7 @@ public class Server {
             this.serverthread.start();
     }
 
+    //TODO Leave Message nicht an leaver schicken
     private void sendToAllClients(String[] msg) {
         for (Socket client : clients) {
             sendToClient(client, msg);
@@ -88,7 +87,7 @@ public class Server {
 
                     if (inobj instanceof String[]) {
                         if (((String[]) inobj).length < 3) {
-                            log("Datenpaket hat unerwartete Länge");
+                            log("Datenpaket hat unerwartete Laenge");
                             return;
                         }
 
@@ -108,13 +107,15 @@ public class Server {
                                 if (msg[2].equals("REG")) {
                                     clients.add(socket);
                                     clientnames.put(socket, msg[1]);
-                                    log("Client " + socket.getInetAddress().toString() + " registered as " + msg[1]);
+                                    log("Client " + socket.getInetAddress().toString() + " hat sich als " + msg[1] + " registriert");
+                                    sendToAllClients(new String[] {"MSG", "", msg[1] + " ist dem Chatraum beigetreten!"});
                                 }
                                 break;
                         }
                     }
                 } catch (IOException e) {
                     log("Client " + socket.getInetAddress().toString() + " bzw. " + clientnames.get(socket) + " hat die Verbindung getrennt!");
+                    sendToAllClients(new String[]{"MSG", "", clientnames.get(socket) + " hat den Chatraum verlassen"});
                     clients.remove(socket);
                     clientnames.remove(socket);
                     return;
