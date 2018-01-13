@@ -10,68 +10,21 @@ import java.util.HashMap;
 
 public class Server {
 
-    //TODO: Clients registrieren lassen mit CMD
     ServerSocket mainserver;
-    Thread incoming;
+    Thread serverthread = null;
+    int port;
 
     ArrayList<Socket> clients = new ArrayList<>();
     HashMap<Socket, String> clientnames = new HashMap<>();
 
     public Server(int port) {
-        try {
-            log("Es wird versucht Port " + port + " zu binden");
-            mainserver = new ServerSocket(port);
-            log("Port gebinded!");
+        this.port = port;
             log("Server erfolgreich gestartet, es wird auf Verbindungen an Port " + port + " gewartet...");
-
-        while(true) {
-            try {
-                Socket temp = mainserver.accept();
-
-                ObjectInputStream in = new ObjectInputStream(temp.getInputStream());
-                Object inobj = in.readObject();
-
-                log("Einkommendes Paket");
-
-                if (inobj instanceof String[]) {
-                    if (((String[]) inobj).length < 3) {
-                        log("Datenpaket hat unerwartete Länge");
-                        return;
-                    }
-
-                    String[] msg = (String[]) inobj;
-                    System.out.print("[LOG] Paketinhalt: ");
-                    for (String i : msg) {
-                        System.out.print(i + " ");
-                    }
-                    System.out.print("\n");
-
-                    switch (msg[0]) {
-                        case "MSG":
-                            log("Paket von " + temp.getInetAddress().toString() + ": " + msg[0] + " mit " + msg[2]);
-                            sendToAllClients(msg);
-                            break;
-                        case "CMD":
-                            if (msg[2].equals("REG")) {
-                                clients.add(temp);
-                                clientnames.put(temp, msg[1]);
-                                log("Client " + temp.getInetAddress().toString() + " registered as " + msg[1]);
-                            }
-                            break;
-                    }
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
-            }
-        }
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
+            this.serverthread = new Thread(new ServerThread());
+            this.serverthread.start();
     }
 
+    //TODO Leave Message nicht an leaver schicken
     private void sendToAllClients(String[] msg) {
         for (Socket client : clients) {
             sendToClient(client, msg);
@@ -97,7 +50,79 @@ public class Server {
 
         @Override
         public void run() {
+            Socket socket = null;
+            try {
+                mainserver = new ServerSocket(port);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            while (!Thread.currentThread().isInterrupted()) {
+                try {
+                    socket = mainserver.accept();
+                    SocketThread st = new SocketThread(socket);
+                    new Thread(st).start();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
 
+    class SocketThread implements Runnable {
+
+        Socket socket;
+
+        public SocketThread(Socket socket) {
+            this.socket = socket;
+        }
+
+        @Override
+        public void run() {
+            while(!Thread.currentThread().isInterrupted()) {
+                try {
+                    ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
+                    Object inobj = in.readObject();
+
+                    log("Einkommendes Paket");
+
+                    if (inobj instanceof String[]) {
+                        if (((String[]) inobj).length < 3) {
+                            log("Datenpaket hat unerwartete Laenge");
+                            return;
+                        }
+
+                        String[] msg = (String[]) inobj;
+                        System.out.print("[LOG] Paketinhalt: ");
+                        for (String i : msg) {
+                            System.out.print(i + " ");
+                        }
+                        System.out.print("\n");
+
+                        switch (msg[0]) {
+                            case "MSG":
+                                log("Paket von " + socket.getInetAddress().toString() + ": " + msg[0] + " mit " + msg[2]);
+                                sendToAllClients(msg);
+                                break;
+                            case "CMD":
+                                if (msg[2].equals("REG")) {
+                                    clients.add(socket);
+                                    clientnames.put(socket, msg[1]);
+                                    log("Client " + socket.getInetAddress().toString() + " hat sich als " + msg[1] + " registriert");
+                                    sendToAllClients(new String[] {"MSG", "", msg[1] + " ist dem Chatraum beigetreten!"});
+                                }
+                                break;
+                        }
+                    }
+                } catch (IOException e) {
+                    log("Client " + socket.getInetAddress().toString() + " bzw. " + clientnames.get(socket) + " hat die Verbindung getrennt!");
+                    sendToAllClients(new String[]{"MSG", "", clientnames.get(socket) + " hat den Chatraum verlassen"});
+                    clients.remove(socket);
+                    clientnames.remove(socket);
+                    return;
+                } catch (ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 }

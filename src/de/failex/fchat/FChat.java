@@ -31,7 +31,7 @@ public class FChat extends Application {
                 int port = Integer.parseInt(args[0]);
                 new Server(port);
             } catch (NumberFormatException e) {
-                System.err.println("That is not a valid port number!");
+                System.err.println("Kein gueltiger Port!");
                 System.exit(1);
             }
         }
