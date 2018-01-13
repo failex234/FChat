@@ -6,6 +6,7 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class Server {
 
@@ -13,7 +14,8 @@ public class Server {
     ServerSocket mainserver;
     Thread incoming;
 
-    ArrayList<Socket> clients;
+    ArrayList<Socket> clients = new ArrayList<>();
+    HashMap<Socket, String> clientnames = new HashMap<>();
 
     public Server(int port) {
         try {
@@ -37,6 +39,11 @@ public class Server {
                         }
 
                         String[] msg = (String[]) inobj;
+                        System.out.print("[LOG] Paketinhalt: ");
+                        for (String i : msg)  {
+                            System.out.print(i + " ");
+                        }
+                        System.out.print("\n");
 
                         switch (msg[0]) {
                             case "MSG":
@@ -44,7 +51,11 @@ public class Server {
                                 sendToAllClients(msg);
                                 break;
                             case "CMD":
-                                //TODO: Kommandos schreiben
+                                if (msg[2].equals("REG")) {
+                                    clients.add(temp);
+                                    clientnames.put(temp, msg[1]);
+                                    log("Client " + temp.getInetAddress().toString() + " registered as " + msg[1]);
+                                }
                                 break;
                         }
                     }

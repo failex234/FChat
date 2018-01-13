@@ -34,6 +34,9 @@ public class Client {
             c.lv_msg.setItems(old);
             MainGUI.connected = true;
 
+            //Nicknames cant contain Spaces!
+            sendMessage(1, "REG");
+
             incoming = new Thread(() -> {
                 try {
                     ObjectInputStream in = new ObjectInputStream(server.getInputStream());
@@ -45,6 +48,7 @@ public class Client {
                         if (msg.length < 3) throw new Exception("Unfertige Nachricht angekommen");
                         switch (msg[0]) {
                             case "MSG":
+                                //TODO: Remove
                                 String addtolv = "[" + msg[1] + "] " + msg[2];
                                 ObservableList<String> oldlist = c.lv_msg.getItems();
                                 oldlist.add(addtolv);
@@ -75,6 +79,7 @@ public class Client {
         }
         String[] temp = {type == 0 ? "MSG" : "CMD", nickname, msg};
 
+
         String addtolv = "[" + nickname + "] " + msg;
         ObservableList<String> oldlist = c.lv_msg.getItems();
         oldlist.add(addtolv);
@@ -83,7 +88,7 @@ public class Client {
         try {
             ObjectOutputStream out = new ObjectOutputStream(server.getOutputStream());
 
-            out.writeObject(msg);
+            out.writeObject(temp);
             out.flush();
             out.close();
             //TODO: Vielleicht Socket flushen!

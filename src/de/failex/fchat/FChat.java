@@ -32,6 +32,5 @@ public class FChat extends Application {
             System.err.println("That is not a valid port number!");
             System.exit(1);
         }
-        System.exit(0);
     }
 }
