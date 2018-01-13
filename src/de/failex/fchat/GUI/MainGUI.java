@@ -8,6 +8,7 @@ import javafx.stage.Stage;
 
 public class MainGUI {
 
+    //TODO Let user choose username
     public static boolean connected = false;
     Client cl;
 
@@ -17,13 +18,8 @@ public class MainGUI {
 
         c.btn_send.setDisable(true);
 
-        c.btn_connect.setOnMouseClicked(event -> {
-            //TODO: neue Client Object
-        });
-
-        c.btn_send.setOnMouseClicked(event -> {
-           //TODO: Sende Nachricht an Client Object
-        });
+        //TODO: Wrapping benötigt. sonst horizontaler Scrollbalken
+        c.lv_msg.setMaxWidth(560);
 
         c.tb_host.setOnKeyTyped(event -> {
             if (!c.tb_host.getText().isEmpty() && !c.tb_port.getText().isEmpty()) {
