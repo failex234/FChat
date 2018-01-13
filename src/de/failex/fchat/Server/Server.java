@@ -22,53 +22,50 @@ public class Server {
             log("Es wird versucht Port " + port + " zu binden");
             mainserver = new ServerSocket(port);
             log("Port gebinded!");
-
-            incoming = new Thread(() -> {
-                try {
-                    Socket temp = mainserver.accept();
-
-                    ObjectInputStream in = new ObjectInputStream(temp.getInputStream());
-                    Object inobj = in.readObject();
-
-                    log("Einkommendes Paket");
-
-                    if (inobj instanceof String[]) {
-                        if (((String[]) inobj).length < 3) {
-                            log("Datenpaket hat unerwartete Länge");
-                            return;
-                        }
-
-                        String[] msg = (String[]) inobj;
-                        System.out.print("[LOG] Paketinhalt: ");
-                        for (String i : msg)  {
-                            System.out.print(i + " ");
-                        }
-                        System.out.print("\n");
-
-                        switch (msg[0]) {
-                            case "MSG":
-                                log("Paket von " + temp.getInetAddress().toString() + ": " + msg[0] + " mit " + msg[2]);
-                                sendToAllClients(msg);
-                                break;
-                            case "CMD":
-                                if (msg[2].equals("REG")) {
-                                    clients.add(temp);
-                                    clientnames.put(temp, msg[1]);
-                                    log("Client " + temp.getInetAddress().toString() + " registered as " + msg[1]);
-                                }
-                                break;
-                        }
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (ClassNotFoundException e) {
-                    e.printStackTrace();
-                }
-            });
-
-            incoming.start();
-
             log("Server erfolgreich gestartet, es wird auf Verbindungen an Port " + port + " gewartet...");
+
+        while(true) {
+            try {
+                Socket temp = mainserver.accept();
+
+                ObjectInputStream in = new ObjectInputStream(temp.getInputStream());
+                Object inobj = in.readObject();
+
+                log("Einkommendes Paket");
+
+                if (inobj instanceof String[]) {
+                    if (((String[]) inobj).length < 3) {
+                        log("Datenpaket hat unerwartete Länge");
+                        return;
+                    }
+
+                    String[] msg = (String[]) inobj;
+                    System.out.print("[LOG] Paketinhalt: ");
+                    for (String i : msg) {
+                        System.out.print(i + " ");
+                    }
+                    System.out.print("\n");
+
+                    switch (msg[0]) {
+                        case "MSG":
+                            log("Paket von " + temp.getInetAddress().toString() + ": " + msg[0] + " mit " + msg[2]);
+                            sendToAllClients(msg);
+                            break;
+                        case "CMD":
+                            if (msg[2].equals("REG")) {
+                                clients.add(temp);
+                                clientnames.put(temp, msg[1]);
+                                log("Client " + temp.getInetAddress().toString() + " registered as " + msg[1]);
+                            }
+                            break;
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
         } catch (IOException e) {
             e.printStackTrace();
             System.exit(1);
@@ -94,5 +91,13 @@ public class Server {
 
     private void log(String msg) {
         System.out.println("[LOG] " + msg);
+    }
+
+    class ServerThread implements Runnable {
+
+        @Override
+        public void run() {
+
+        }
     }
 }

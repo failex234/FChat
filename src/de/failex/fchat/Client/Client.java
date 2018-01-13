@@ -16,6 +16,7 @@ public class Client {
     Thread incoming;
     Socket server = new Socket();
     String nickname = "User";
+    ObjectOutputStream out;
     MainGUIController c;
 
     //TODO Client registrieren mit CMD!
@@ -37,8 +38,10 @@ public class Client {
             c.tb_host.setDisable(true);
             c.tb_port.setDisable(true);
 
+            out = new ObjectOutputStream(server.getOutputStream());
             //Nicknames cant contain Spaces!
             sendMessage(1, "REG");
+
 
             incoming = new Thread(() -> {
                 try {
@@ -91,11 +94,10 @@ public class Client {
         }
 
         try {
-            ObjectOutputStream out = new ObjectOutputStream(server.getOutputStream());
 
             out.writeObject(temp);
             out.flush();
-            //TODO: Vielleicht Socket flushen!
+
         } catch (IOException e) {
             printException(e);
         }
