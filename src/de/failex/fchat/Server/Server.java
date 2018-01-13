@@ -87,7 +87,6 @@ public class Server {
             out = new ObjectOutputStream(client.getOutputStream());
             out.writeObject(msg);
             out.flush();
-            out.close();
         } catch (IOException e) {
             e.printStackTrace();
         }

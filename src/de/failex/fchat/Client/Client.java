@@ -14,7 +14,7 @@ import java.net.UnknownHostException;
 public class Client {
 
     Thread incoming;
-    Socket server;
+    Socket server = new Socket();
     String nickname = "User";
     MainGUIController c;
 
@@ -26,13 +26,16 @@ public class Client {
 
             InetSocketAddress address = new InetSocketAddress(hostaddress, port);
 
-            server = new Socket();
             server.connect(address);
 
             ObservableList<String> old = c.lv_msg.getItems();
             old.add("Erfolgreich verbunden!");
             c.lv_msg.setItems(old);
             MainGUI.connected = true;
+
+            c.btn_connect.setDisable(true);
+            c.tb_host.setDisable(true);
+            c.tb_port.setDisable(true);
 
             //Nicknames cant contain Spaces!
             sendMessage(1, "REG");
@@ -80,17 +83,18 @@ public class Client {
         String[] temp = {type == 0 ? "MSG" : "CMD", nickname, msg};
 
 
-        String addtolv = "[" + nickname + "] " + msg;
-        ObservableList<String> oldlist = c.lv_msg.getItems();
-        oldlist.add(addtolv);
-        c.lv_msg.setItems(oldlist);
+        if (type == 0) {
+            String addtolv = "[" + nickname + "] " + msg;
+            ObservableList<String> oldlist = c.lv_msg.getItems();
+            oldlist.add(addtolv);
+            c.lv_msg.setItems(oldlist);
+        }
 
         try {
             ObjectOutputStream out = new ObjectOutputStream(server.getOutputStream());
 
             out.writeObject(temp);
             out.flush();
-            out.close();
             //TODO: Vielleicht Socket flushen!
         } catch (IOException e) {
             printException(e);
