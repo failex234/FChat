@@ -24,7 +24,7 @@ public class MainGUI {
 
         //Only enable connect button when both the hostname and port field are not empty
         c.tb_host.setOnKeyTyped(event -> {
-            if (!c.tb_host.getText().isEmpty() && !c.tb_port.getText().isEmpty()) {
+            if (!c.tb_host.getText().isEmpty() && !c.tb_port.getText().isEmpty() && !c.tb_nickname.getText().isEmpty()) {
                 c.btn_connect.setDisable(false);
             } else {
                 c.btn_connect.setDisable(true);
@@ -33,7 +33,16 @@ public class MainGUI {
 
         //Only enable connect button when both the hostname and port field are not empty
         c.tb_port.setOnKeyTyped(event -> {
-            if (!c.tb_host.getText().isEmpty() && !c.tb_port.getText().isEmpty()) {
+            if (!c.tb_host.getText().isEmpty() && !c.tb_port.getText().isEmpty() && !c.tb_nickname.getText().isEmpty()) {
+                c.btn_connect.setDisable(false);
+            } else {
+                c.btn_connect.setDisable(true);
+            }
+        });
+
+        //Only enable connect button when both the hostname and port field are not empty
+        c.tb_nickname.setOnKeyTyped(event -> {
+            if (!c.tb_host.getText().isEmpty() && !c.tb_port.getText().isEmpty() && !c.tb_nickname.getText().isEmpty()) {
                 c.btn_connect.setDisable(false);
             } else {
                 c.btn_connect.setDisable(true);
@@ -51,7 +60,7 @@ public class MainGUI {
 
         //Create a new client
         c.btn_connect.setOnMouseClicked(event -> {
-            cl = new Client(c.tb_host.getText(), Integer.parseInt(c.tb_port.getText()), c);
+            cl = new Client(c.tb_host.getText(), Integer.parseInt(c.tb_port.getText()),c);
         });
 
         //Send the message to the server

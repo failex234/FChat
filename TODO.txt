@@ -1,6 +1,3 @@
-- Dem eigenen Client nicht die eigenen 
-Join / Leave Messages schicken
-
 - keine doppelten Nicknamen
 
 - keine Leerzeichen in Nicknamen

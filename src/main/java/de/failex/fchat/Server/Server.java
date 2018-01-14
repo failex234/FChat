@@ -128,6 +128,12 @@ public class Server {
 
                         } else if (msg[0].equals("CMD")) {
                             if (msg[2].equals("REG")) {
+                                //Check if nickname is already assigned to anyone
+                                if (clientnames.containsValue(msg[1])) {
+                                    log("Client " + socket.getInetAddress().toString() + " tried to register as " + msg[1] + " but the nickname is already assigned");
+                                    sendToClient(socket, new String[]{"CMD","", "NICK"});
+                                    return;
+                                }
                                 clients.add(socket);
                                 clientnames.put(socket, msg[1]);
                                 log("Client " + socket.getInetAddress().toString() + " registered as " + msg[1]);

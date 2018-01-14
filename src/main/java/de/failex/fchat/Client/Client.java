@@ -23,7 +23,7 @@ public class Client {
     public Client(String hostaddress, int port, MainGUIController c) {
         this.c = c;
         try {
-            //Che k if host is up / hostaddress exists
+            //Check if host is up / hostaddress exists
             InetAddress.getByName(hostaddress);
 
             InetSocketAddress address = new InetSocketAddress(hostaddress, port);
@@ -35,6 +35,9 @@ public class Client {
             c.btn_connect.setDisable(true);
             c.tb_host.setDisable(true);
             c.tb_port.setDisable(true);
+            c.tb_nickname.setDisable(true);
+
+            this.nickname = c.tb_nickname.getText();
 
             //Register as client at the server
             sendMessage(1, "REG");
@@ -111,6 +114,15 @@ public class Client {
                                 }
                                 break;
                             case "CMD":
+                                if (msg[2].equals("NICK") && MainGUI.connected) {
+                                    MainGUI.alert("Duplicate nickname", "Duplicate nickname", "Sorry but this nickname is already taken!", Alert.AlertType.ERROR);
+                                    MainGUI.connected = false;
+                                    c.tb_nickname.setDisable(false);
+                                    c.tb_host.setDisable(false);
+                                    c.tb_port.setDisable(false);
+                                    Thread.currentThread().stop();
+                                    return;
+                                }
                                 //TODO: add commands
                                 break;
                         }
