@@ -1,0 +1,25 @@
+- Dem eigenen Client nicht die eigenen 
+Join / Leave Messages schicken
+
+- keine doppelten Nicknamen
+
+- keine Leerzeichen in Nicknamen
+
+- max. Clientanzahl
+
+- kleiner Spamschutz
+
+- mehr Customizability im Client 
+(Chatnachrichten, Nickname, Design usw.)
+
+- Teilnehmerliste im Client für Mods
+
+- Extra Markierung von Mods im Chat
+
+- MOTD
+
+- Alle Module sind Serverseitig 
+abstellbar
+
+- Chatclearing force für Mods. jeder 
+client kann seinen eigenen Chat clearen
