@@ -23,43 +23,40 @@ public class Client {
     public Client(String hostaddress, int port, MainGUIController c) {
         this.c = c;
         try {
+            //Che k if host is up / hostaddress exists
             InetAddress.getByName(hostaddress);
 
             InetSocketAddress address = new InetSocketAddress(hostaddress, port);
 
             server.connect(address);
-
-            ObservableList<String> old = c.lv_msg.getItems();
-            old.add("Erfolgreich verbunden!");
-            c.lv_msg.setItems(old);
             MainGUI.connected = true;
 
+            //Disable hostname textfield, port textfield and connect button because we're connected
             c.btn_connect.setDisable(true);
             c.tb_host.setDisable(true);
             c.tb_port.setDisable(true);
 
-            //Nicknames cant contain Spaces!
+            //Register as client at the server
             sendMessage(1, "REG");
 
             incoming = new Thread(new ClientThread());
             incoming.start();
 
         } catch (UnknownHostException e) {
-            MainGUI.alert("Verbindung fehlgeschlagen", "Verbindung fehlgeschlagen!", "Es konnte keine Verbindung hergestellt werden!\n", Alert.AlertType.ERROR);
+            MainGUI.alert("Connection failed", "Connection failed!", "Unable to connect to the server!\n", Alert.AlertType.ERROR);
         } catch (IOException e) {
             printException(e);
         }
     }
 
+    /**
+     * Sends a message or a command to the server
+     * @param type message or command. 0 for message, not 0 for command
+     * @param msg the content of the message / what command
+     */
     public void sendMessage(int type, String msg) {
-        if (nickname == null || nickname.isEmpty()) {
-            nickname = "";
-        }
         String[] temp = {type == 0 ? "MSG" : "CMD", nickname, msg};
-
-
         try {
-
             out = new ObjectOutputStream(server.getOutputStream());
             out.flush();
             out.writeObject(temp);
@@ -70,15 +67,21 @@ public class Client {
         }
     }
 
+    /**
+     * Display an alert with the exception
+     * @param e the exception
+     */
     private void printException(Exception e) {
         StringWriter sw = new StringWriter();
         PrintWriter pw = new PrintWriter(sw);
         e.printStackTrace(pw);
         String trace = sw.toString();
-        MainGUI.alert("Fehler", "Fehler", "Es hab einen Fehler, bitte das hier melden:\n" + trace, Alert.AlertType.ERROR);
+        MainGUI.alert("Error", "Error", "An error occured, please report the following\n" + trace, Alert.AlertType.ERROR);
     }
 
-
+    /**
+     * main incoming packet thread
+     */
     class ClientThread implements Runnable {
 
         @Override
@@ -88,10 +91,11 @@ public class Client {
                     ObjectInputStream in = new ObjectInputStream(server.getInputStream());
                     Object inobj = in.readObject();
 
+                    //disassmble the string array then check if it's a chat message or a command
                     if (inobj instanceof String[]) {
                         String[] msg = (String[]) inobj;
-                        if (msg.length == 0) throw new Exception("Leerer Nachrichteninhalt!");
-                        if (msg.length < 3) throw new Exception("Unfertige Nachricht angekommen");
+                        if (msg.length == 0) throw new Exception("empty datapackage!");
+                        if (msg.length < 3) throw new Exception("received a corrupted message");
                         switch (msg[0]) {
                             case "MSG":
                                 if (!msg[1].isEmpty()) {
@@ -107,7 +111,7 @@ public class Client {
                                 }
                                 break;
                             case "CMD":
-                                //TODO: Befehle schreiben
+                                //TODO: add commands
                                 break;
                         }
                     }

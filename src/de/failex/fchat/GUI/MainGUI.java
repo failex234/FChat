@@ -13,14 +13,16 @@ public class MainGUI {
     Client cl;
 
     public MainGUI(MainGUIController c, Stage stage) {
+        //Set standard port
         c.tb_port.setText("1552");
-        c.tb_host.setText("127.0.0.1");
+        c.tb_host.setText("");
+        c.btn_connect.setDisable(true);
 
         c.btn_send.setDisable(true);
 
-        //TODO: Wrapping benötigt. sonst horizontaler Scrollbalken
-        c.lv_msg.setMaxWidth(560);
+        //TODO remove horizontal scrolling
 
+        //Only enable connect button when both the hostname and port field are not empty
         c.tb_host.setOnKeyTyped(event -> {
             if (!c.tb_host.getText().isEmpty() && !c.tb_port.getText().isEmpty()) {
                 c.btn_connect.setDisable(false);
@@ -29,6 +31,7 @@ public class MainGUI {
             }
         });
 
+        //Only enable connect button when both the hostname and port field are not empty
         c.tb_port.setOnKeyTyped(event -> {
             if (!c.tb_host.getText().isEmpty() && !c.tb_port.getText().isEmpty()) {
                 c.btn_connect.setDisable(false);
@@ -37,6 +40,7 @@ public class MainGUI {
             }
         });
 
+        //Enable the send button when the message textfield is not empty
         c.tb_msg.setOnKeyTyped(event -> {
             if (!c.tb_msg.getText().isEmpty()) {
                 c.btn_send.setDisable(false);
@@ -45,10 +49,12 @@ public class MainGUI {
             }
         });
 
+        //Create a new client
         c.btn_connect.setOnMouseClicked(event -> {
             cl = new Client(c.tb_host.getText(), Integer.parseInt(c.tb_port.getText()), c);
         });
 
+        //Send the message to the server
         c.btn_send.setOnMouseClicked(event -> {
             if (connected) {
                 //Type 0 = MSG, Type 1 = CMD
@@ -56,11 +62,18 @@ public class MainGUI {
                 c.tb_msg.setText("");
                 c.btn_send.setDisable(true);
             } else {
-                alert("Nicht veerbunden", "Nicht verbunden", "Du bist derzeit mit keinem Server verbunden!", Alert.AlertType.INFORMATION);
+                alert("Not connected", "Not connected", "You're not connected to a server yet!", Alert.AlertType.INFORMATION);
             }
         });
     }
 
+    /**
+     * Displays an alert
+     * @param title alert title
+     * @param header alert header
+     * @param content alert content
+     * @param type alert type
+     */
     public static void alert(String title, String header, String content, Alert.AlertType type) {
         Alert a = new Alert(type);
         if (type.equals(Alert.AlertType.ERROR)) {

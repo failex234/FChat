@@ -19,18 +19,36 @@ public class Server {
 
     public Server(int port) {
         this.port = port;
-            log("Server erfolgreich gestartet, es wird auf Verbindungen an Port " + port + " gewartet...");
-            this.serverthread = new Thread(new ServerThread());
-            this.serverthread.start();
+        log("Server erfolgreich gestartet, es wird auf Verbindungen an Port " + port + " gewartet...");
+        this.serverthread = new Thread(new ServerThread());
+        this.serverthread.start();
     }
 
-    //TODO Leave Message nicht an leaver schicken
+
+    /**
+     * Sends a package (String Array) to all connected sockets
+     *
+     * @param msg the datapackage
+     */
     private void sendToAllClients(String[] msg) {
         for (Socket client : clients) {
+            if (msg[0].equals("MSG") && msg[1].isEmpty() && msg[2].contains(clientnames.get(client))) continue;
             sendToClient(client, msg);
         }
     }
 
+    /**
+     * Sends a datapackage (String array) to given socket
+     *
+     * @param client where to send the datapackage to
+     * @param msg    what datapackage to send
+     *               <p>
+     *               Structure of a datapackage:
+     *               pkg[0] = MSG / CMD: Whether the content is a normal chat message or a command
+     *               pkg[1] = nickname: Sends the nickname of the sender. empty if a command gets send
+     *               pkg[2] = content of MSG or CMD / the chat message itself or the command to send
+     *               </p>
+     */
     private void sendToClient(Socket client, String[] msg) {
         ObjectOutputStream out = null;
         try {
@@ -46,6 +64,9 @@ public class Server {
         System.out.println("[LOG] " + msg);
     }
 
+    /**
+     * The main server thread
+     */
     class ServerThread implements Runnable {
 
         @Override
@@ -68,6 +89,9 @@ public class Server {
         }
     }
 
+    /**
+     * socket thread that receives packets and then processed
+     */
     class SocketThread implements Runnable {
 
         Socket socket;
@@ -78,21 +102,21 @@ public class Server {
 
         @Override
         public void run() {
-            while(!Thread.currentThread().isInterrupted()) {
+            while (!Thread.currentThread().isInterrupted()) {
                 try {
                     ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
                     Object inobj = in.readObject();
 
-                    log("Einkommendes Paket");
+                    log("Incoming package");
 
                     if (inobj instanceof String[]) {
                         if (((String[]) inobj).length < 3) {
-                            log("Datenpaket hat unerwartete Laenge");
+                            log("unexpected package length");
                             return;
                         }
 
                         String[] msg = (String[]) inobj;
-                        System.out.print("[LOG] Paketinhalt: ");
+                        System.out.print("[LOG] package contents: ");
                         for (String i : msg) {
                             System.out.print(i + " ");
                         }
@@ -100,22 +124,22 @@ public class Server {
 
                         switch (msg[0]) {
                             case "MSG":
-                                log("Paket von " + socket.getInetAddress().toString() + ": " + msg[0] + " mit " + msg[2]);
+                                log("datapackage from " + socket.getInetAddress().toString() + ": " + msg[0] + " with " + msg[2]);
                                 sendToAllClients(msg);
                                 break;
                             case "CMD":
                                 if (msg[2].equals("REG")) {
                                     clients.add(socket);
                                     clientnames.put(socket, msg[1]);
-                                    log("Client " + socket.getInetAddress().toString() + " hat sich als " + msg[1] + " registriert");
-                                    sendToAllClients(new String[] {"MSG", "", msg[1] + " ist dem Chatraum beigetreten!"});
+                                    log("Client " + socket.getInetAddress().toString() + " registered as " + msg[1]);
+                                    sendToAllClients(new String[]{"MSG", "", msg[1] + " joined the chat room!"});
                                 }
                                 break;
                         }
                     }
                 } catch (IOException e) {
-                    log("Client " + socket.getInetAddress().toString() + " bzw. " + clientnames.get(socket) + " hat die Verbindung getrennt!");
-                    sendToAllClients(new String[]{"MSG", "", clientnames.get(socket) + " hat den Chatraum verlassen"});
+                    log("Client " + socket.getInetAddress().toString() + " aka " + clientnames.get(socket) + " disconnected!");
+                    sendToAllClients(new String[]{"MSG", "", clientnames.get(socket) + " left the chat room"});
                     clients.remove(socket);
                     clientnames.remove(socket);
                     return;

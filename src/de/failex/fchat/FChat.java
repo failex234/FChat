@@ -12,6 +12,7 @@ public class FChat extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
+        //Setup GUI and start controller
         FXMLLoader loader = new FXMLLoader();
         Parent root = loader.load(getClass().getResourceAsStream("maingui.fxml"));
         primaryStage.setTitle("FChat");
@@ -23,6 +24,7 @@ public class FChat extends Application {
 
 
     public static void main(String[] args) {
+        //Start the server when the program starts with an argument
         if (args.length == 0) {
             launch(args);
             System.exit(0);
