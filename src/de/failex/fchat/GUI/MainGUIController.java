@@ -29,4 +29,16 @@ public class MainGUIController {
 
     @FXML
     public Button btn_send;
+
+    @FXML
+    public Label lbl_nickname;
+
+    @FXML
+    public Label lbl_host;
+
+    @FXML
+    public Label lbl_port;
+
+    @FXML
+    public TextField tb_nickname;
 }
