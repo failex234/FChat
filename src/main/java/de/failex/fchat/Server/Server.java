@@ -22,7 +22,7 @@ public class Server {
     ArrayList<Socket> clients = new ArrayList<>();
     HashMap<Socket, String> clientnames = new HashMap<>();
 
-    File config = new File("/config.json");
+    File config = new File("config.json");
     ServerConfig cfg;
     Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
@@ -39,6 +39,7 @@ public class Server {
 
                 while (line != null) {
                     sb.append(line + "\n");
+                    line = reader.readLine();
                 }
                 cfg = gson.fromJson(sb.toString(), ServerConfig.class);
                 motd = cfg.getMotd();
@@ -106,7 +107,8 @@ public class Server {
             out.writeObject(msg);
             out.flush();
         } catch (IOException e) {
-            e.printStackTrace();
+            //Client disconnected
+            //e.printStackTrace();
         }
     }
 
@@ -157,7 +159,8 @@ public class Server {
                     ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
                     Object inobj = in.readObject();
 
-                    log("Incoming package");
+                    //DEBUG
+                    //log("Incoming package");
 
                     if (inobj instanceof String[]) {
                         if (((String[]) inobj).length < 3) {
@@ -166,11 +169,12 @@ public class Server {
                         }
 
                         String[] msg = (String[]) inobj;
-                        System.out.print("[LOG] package contents: ");
-                        for (String i : msg) {
-                            System.out.print(i + " ");
-                        }
-                        System.out.print("\n");
+                        //DEBUG
+                        //System.out.print("[LOG] package contents: ");
+                        //for (String i : msg) {
+                        //    System.out.print(i + " ");
+                        //}
+                        //System.out.print("\n");
 
                         if (msg[0].equals("MSG")) {
                             log("datapackage from " + socket.getInetAddress().toString() + ": " + msg[0] + " with " + msg[2]);
