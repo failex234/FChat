@@ -2,8 +2,6 @@
 
 - keine Leerzeichen in Nicknamen
 
-- max. Clientanzahl
-
 - kleiner Spamschutz
 
 - mehr Customizability im Client 

@@ -60,7 +60,11 @@ public class MainGUI {
 
         //Create a new client
         c.btn_connect.setOnMouseClicked(event -> {
-            cl = new Client(c.tb_host.getText(), Integer.parseInt(c.tb_port.getText()),c);
+            if (c.tb_nickname.getText().contains(" ")) {
+                alert("No spaces", "No spaces", "Sorry but you can't have spaces in your nickname!", Alert.AlertType.INFORMATION);
+            } else {
+                cl = new Client(c.tb_host.getText(), Integer.parseInt(c.tb_port.getText()), c);
+            }
         });
 
         //Send the message to the server
