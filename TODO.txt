@@ -1,7 +1,4 @@
-- keine doppelten Nicknamen
-
-- keine Leerzeichen in Nicknamen
-
+- keine doppelten Nicknamen - HALB
 - kleiner Spamschutz
 
 - mehr Customizability im Client 
@@ -11,13 +8,13 @@
 
 - Extra Markierung von Mods im Chat
 
-- MOTD
-
 - Alle Module sind Serverseitig 
-abstellbar
+abstellbar / einstellbar
 
 - Chatclearing force für Mods. jeder 
 client kann seinen eigenen Chat clearen
+
+- Chatfarbcodes
 
 Unfixed:
 - Client rafft nicht, dass der Nickname ein Duplikat ist

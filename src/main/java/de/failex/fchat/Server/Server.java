@@ -1,8 +1,9 @@
 package de.failex.fchat.Server;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -21,9 +22,53 @@ public class Server {
     ArrayList<Socket> clients = new ArrayList<>();
     HashMap<Socket, String> clientnames = new HashMap<>();
 
+    File config = new File("/config.json");
+    ServerConfig cfg;
+    Gson gson = new GsonBuilder().setPrettyPrinting().create();
+
+    String motd = "";
+    ArrayList<String> mods;
+
     public Server(int port) {
+        if (config.exists()) {
+            log("Config found, reading config");
+
+            try (BufferedReader reader = new BufferedReader(new FileReader(config))) {
+                StringBuilder sb = new StringBuilder();
+                String line = reader.readLine();
+
+                while (line != null) {
+                    sb.append(line + "\n");
+                }
+                cfg = gson.fromJson(sb.toString(), ServerConfig.class);
+                motd = cfg.getMotd();
+                mods = cfg.getMods();
+            } catch (IOException e) {
+                log("Error reading config");
+                e.printStackTrace();
+            }
+
+        } else {
+            log("No config found. creating new config...");
+            cfg = new ServerConfig();
+            cfg.setMotd("");
+
+            String json = gson.toJson(cfg);
+
+            try {
+                config.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(config), "utf-8"))) {
+                writer.write(json);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
         this.port = port;
-        log("Server erfolgreich gestartet, es wird auf Verbindungen an Port " + port + " gewartet...");
+        log("Server started successfully! listening for connections on port " + port);
         this.serverthread = new Thread(new ServerThread());
         this.serverthread.start();
     }
@@ -36,6 +81,7 @@ public class Server {
      */
     private void sendToAllClients(String[] msg) {
         for (Socket client : clients) {
+            //TODO \/
             //if (msg[0].equals("MSG") && msg[1].isEmpty() && msg[2].contains(clientnames.get(client))) continue;
             sendToClient(client, msg);
         }
@@ -145,6 +191,10 @@ public class Server {
                                     clientcount++;
                                     clients.add(socket);
                                     clientnames.put(socket, msg[1]);
+                                    //Send motd to client if motd is set
+                                    if (!motd.isEmpty()) {
+                                        sendToClient(socket, new String[]{"MSG", "", motd});
+                                    }
                                     log("Client " + socket.getInetAddress().toString() + " registered as " + msg[1]);
                                     sendToAllClients(new String[]{"MSG", "", msg[1] + " joined the chat room!"});
                                 }
