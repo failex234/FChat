@@ -6,10 +6,7 @@ import javafx.collections.ObservableList;
 import javafx.scene.control.Alert;
 
 import java.io.*;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.UnknownHostException;
+import java.net.*;
 
 public class Client {
 
@@ -47,6 +44,10 @@ public class Client {
 
         } catch (UnknownHostException e) {
             MainGUI.alert("Connection failed", "Connection failed!", "Unable to connect to the server!\n", Alert.AlertType.ERROR);
+        } catch (ConnectException e) {
+            MainGUI.alert("Server not online", "Server not online!", "There is no server online under that address!\n", Alert.AlertType.ERROR);
+        } catch (SocketException e) {
+            MainGUI.alert("Invalid address", "Invalid address", "You entered an invalid address!\n", Alert.AlertType.ERROR);
         } catch (IOException e) {
             printException(e);
         }

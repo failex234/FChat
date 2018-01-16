@@ -89,7 +89,7 @@ public class MainGUI {
      */
     public static void alert(String title, String header, String content, Alert.AlertType type) {
         Alert a = new Alert(type);
-        if (type.equals(Alert.AlertType.ERROR)) {
+        if (type.equals(Alert.AlertType.ERROR) && title.equals("Error")) {
             TextArea ta = new TextArea(content);
             ta.setWrapText(true);
             ta.setEditable(false);
