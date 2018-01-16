@@ -12,7 +12,11 @@ public class Server {
 
     ServerSocket mainserver;
     Thread serverthread = null;
+
     int port;
+    //TODO Should be user definable
+    final int MAXCLIENTS = 32;
+    int clientcount = 0;
 
     ArrayList<Socket> clients = new ArrayList<>();
     HashMap<Socket, String> clientnames = new HashMap<>();
@@ -32,7 +36,7 @@ public class Server {
      */
     private void sendToAllClients(String[] msg) {
         for (Socket client : clients) {
-            if (msg[0].equals("MSG") && msg[1].isEmpty() && msg[2].contains(clientnames.get(client))) continue;
+            //if (msg[0].equals("MSG") && msg[1].isEmpty() && msg[2].contains(clientnames.get(client))) continue;
             sendToClient(client, msg);
         }
     }
@@ -134,10 +138,16 @@ public class Server {
                                     sendToClient(socket, new String[]{"CMD","", "NICK"});
                                     return;
                                 }
-                                clients.add(socket);
-                                clientnames.put(socket, msg[1]);
-                                log("Client " + socket.getInetAddress().toString() + " registered as " + msg[1]);
-                                sendToAllClients(new String[]{"MSG", "", msg[1] + " joined the chat room!"});
+                                if (clientcount == MAXCLIENTS) {
+                                    log("Client " + socket.getInetAddress().toString() + " tried to join but the room is full");
+                                    sendToClient(socket, new String[]{"CMD", "", "FULL"});
+                                } else {
+                                    clientcount++;
+                                    clients.add(socket);
+                                    clientnames.put(socket, msg[1]);
+                                    log("Client " + socket.getInetAddress().toString() + " registered as " + msg[1]);
+                                    sendToAllClients(new String[]{"MSG", "", msg[1] + " joined the chat room!"});
+                                }
                             }
 
                         }
@@ -147,6 +157,7 @@ public class Server {
                     sendToAllClients(new String[]{"MSG", "", clientnames.get(socket) + " left the chat room"});
                     clients.remove(socket);
                     clientnames.remove(socket);
+                    clientcount--;
                     return;
                 } catch (ClassNotFoundException e) {
                     e.printStackTrace();

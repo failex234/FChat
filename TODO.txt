@@ -20,3 +20,6 @@ abstellbar
 
 - Chatclearing force für Mods. jeder 
 client kann seinen eigenen Chat clearen
+
+Unfixed:
+- Client rafft nicht, dass der Nickname ein Duplikat ist

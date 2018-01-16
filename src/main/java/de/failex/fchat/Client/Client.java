@@ -122,6 +122,14 @@ public class Client {
                                     c.tb_port.setDisable(false);
                                     Thread.currentThread().stop();
                                     return;
+                                } else if (msg[2].equals("FULL") && MainGUI.connected) {
+                                    MainGUI.alert("Room full", "Romm full!", "Sorry but the chatroom is full", Alert.AlertType.ERROR);
+                                    MainGUI.connected = false;
+                                    c.tb_nickname.setDisable(false);
+                                    c.tb_host.setDisable(false);
+                                    c.tb_port.setDisable(false);
+                                    Thread.currentThread().stop();
+                                    return;
                                 }
                                 //TODO: add commands
                                 break;
