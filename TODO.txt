@@ -15,7 +15,7 @@ client kann seinen eigenen Chat clearen
 
 - Chatfarbcodes
 
-- Server InterpreterThread
+- Konsolenkommandos hinzufügen / ausschreiben
 
 - Passwörter für Mods
 

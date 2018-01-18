@@ -8,11 +8,13 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Scanner;
 
 public class Server {
 
     ServerSocket mainserver;
     Thread serverthread = null;
+    Thread interpreter = null;
 
     int port;
     //TODO Should be user definable
@@ -71,6 +73,8 @@ public class Server {
         }
         this.port = port;
         log("Server started successfully! listening for connections on port " + port);
+        this.interpreter = new Thread(new InterpreterThread());
+        interpreter.start();
         this.serverthread = new Thread(new ServerThread());
         this.serverthread.start();
     }
@@ -218,6 +222,44 @@ public class Server {
                     return;
                 } catch (ClassNotFoundException e) {
                     e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    class InterpreterThread implements Runnable {
+
+        @Override
+        public void run() {
+            BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+            while(!Thread.currentThread().isInterrupted()) {
+                String cmd = "";
+                try {
+                    cmd = br.readLine();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                String[] cmds = cmd.split(" ");
+                cmd = cmds[0];
+                switch (cmd) {
+                    case "kick":
+                        break;
+                    case "addmod":
+                        break;
+                    case "removemod":
+                        break;
+                    case "quit":
+                    case "stop":
+                        //TODO: Save current settings (mods, motd, maxclients etc. to config)
+                        System.exit(0);
+                        break;
+                    case "setmotd":
+                        break;
+                    case "setclientlimit":
+                        break;
+                    default:
+                        System.out.println("Command not found!");
+                        break;
                 }
             }
         }
