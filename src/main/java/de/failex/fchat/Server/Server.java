@@ -16,7 +16,7 @@ public class Server {
 
     int port;
     //TODO Should be user definable
-    final int MAXCLIENTS = 32;
+    int maxclients;
     int clientcount = 0;
 
     ArrayList<Socket> clients = new ArrayList<>();
@@ -44,6 +44,7 @@ public class Server {
                 cfg = gson.fromJson(sb.toString(), ServerConfig.class);
                 motd = cfg.getMotd();
                 mods = cfg.getMods();
+                maxclients = cfg.getMaxclients();
             } catch (IOException e) {
                 log("Error reading config");
                 e.printStackTrace();
@@ -188,7 +189,7 @@ public class Server {
                                     sendToClient(socket, new String[]{"CMD","", "NICK"});
                                     return;
                                 }
-                                if (clientcount == MAXCLIENTS) {
+                                if (clientcount >= maxclients) {
                                     log("Client " + socket.getInetAddress().toString() + " tried to join but the room is full");
                                     sendToClient(socket, new String[]{"CMD", "", "FULL"});
                                 } else {
@@ -207,11 +208,13 @@ public class Server {
                         }
                     }
                 } catch (IOException e) {
-                    log("Client " + socket.getInetAddress().toString() + " aka " + clientnames.get(socket) + " disconnected!");
-                    sendToAllClients(new String[]{"MSG", "", clientnames.get(socket) + " left the chat room"});
-                    clients.remove(socket);
-                    clientnames.remove(socket);
-                    clientcount--;
+                    if (clients.contains(socket)) {
+                        log("Client " + socket.getInetAddress().toString() + " aka " + clientnames.get(socket) + " disconnected!");
+                        sendToAllClients(new String[]{"MSG", "", clientnames.get(socket) + " left the chat room"});
+                        clients.remove(socket);
+                        clientnames.remove(socket);
+                        clientcount--;
+                    }
                     return;
                 } catch (ClassNotFoundException e) {
                     e.printStackTrace();

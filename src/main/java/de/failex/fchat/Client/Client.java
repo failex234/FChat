@@ -2,6 +2,7 @@ package de.failex.fchat.Client;
 
 import de.failex.fchat.GUI.MainGUI;
 import de.failex.fchat.GUI.MainGUIController;
+import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Alert;
 
@@ -55,8 +56,9 @@ public class Client {
 
     /**
      * Sends a message or a command to the server
+     *
      * @param type message or command. 0 for message, not 0 for command
-     * @param msg the content of the message / what command
+     * @param msg  the content of the message / what command
      */
     public void sendMessage(int type, String msg) {
         String[] temp = {type == 0 ? "MSG" : "CMD", nickname, msg};
@@ -73,6 +75,7 @@ public class Client {
 
     /**
      * Display an alert with the exception
+     *
      * @param e the exception
      */
     private void printException(Exception e) {
@@ -116,20 +119,32 @@ public class Client {
                                 break;
                             case "CMD":
                                 if (msg[2].equals("NICK") && MainGUI.connected) {
-                                    MainGUI.alert("Duplicate nickname", "Duplicate nickname", "Sorry but this nickname is already taken!", Alert.AlertType.ERROR);
                                     MainGUI.connected = false;
                                     c.tb_nickname.setDisable(false);
                                     c.tb_host.setDisable(false);
                                     c.tb_port.setDisable(false);
-                                    Thread.currentThread().stop();
+                                    c.btn_connect.setDisable(false);
+                                    server.close();
+                                    MainGUI.disconnect();
+                                    //Prevent Not an FX Application Thread error
+                                    Platform.runLater(() -> {
+                                        MainGUI.alert("Duplicate nickname", "Duplicate nickname", "Sorry but this nickname is already taken!", Alert.AlertType.ERROR);
+                                    });
+                                    Thread.currentThread().interrupt();
                                     return;
                                 } else if (msg[2].equals("FULL") && MainGUI.connected) {
-                                    MainGUI.alert("Room full", "Romm full!", "Sorry but the chatroom is full", Alert.AlertType.ERROR);
                                     MainGUI.connected = false;
                                     c.tb_nickname.setDisable(false);
                                     c.tb_host.setDisable(false);
                                     c.tb_port.setDisable(false);
-                                    Thread.currentThread().stop();
+                                    c.btn_connect.setDisable(false);
+                                    //Prevent Not an FX Application Thread error
+                                    Platform.runLater(() -> {
+                                        MainGUI.alert("Room full", "Romm full!", "Sorry but the chatroom is full", Alert.AlertType.ERROR);
+                                    });
+                                    server.close();
+                                    MainGUI.disconnect();
+                                    Thread.currentThread().interrupt();
                                     return;
                                 }
                                 //TODO: add commands
@@ -137,11 +152,7 @@ public class Client {
                         }
                     }
                 } catch (Exception e) {
-                    if (e instanceof IllegalStateException) {
-                        //Not on FX application thread
-                    } else {
-                        printException(e);
-                    }
+                    printException(e);
                 }
             }
         }

@@ -10,7 +10,7 @@ public class MainGUI {
 
     //TODO Let user choose username
     public static boolean connected = false;
-    Client cl;
+    static Client cl;
 
     public MainGUI(MainGUIController c, Stage stage) {
         //Set standard port
@@ -104,5 +104,9 @@ public class MainGUI {
         a.setTitle(title);
         a.setHeaderText(header);
         a.showAndWait();
+    }
+
+    public static void disconnect() {
+        cl = null;
     }
 }
