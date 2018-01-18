@@ -16,5 +16,9 @@ client kann seinen eigenen Chat clearen
 
 - Chatfarbcodes
 
+- Server InterpreterThread
+
+- Passwörter für Mods
+
 Unfixed:
 - Client rafft nicht, dass der Nickname ein Duplikat ist
