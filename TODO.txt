@@ -1,4 +1,4 @@
-- keine doppelten Nicknamen - HALB
+- keine doppelten Nicknamen
 - kleiner Spamschutz
 
 - mehr Customizability im Client 
