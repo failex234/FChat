@@ -11,24 +11,25 @@ import java.util.HashMap;
 
 public class Server {
 
-    ServerSocket mainserver;
-    Thread serverthread = null;
-    Thread interpreter = null;
+    private ServerSocket mainserver;
+    private Thread serverthread = null;
+    private Thread interpreter = null;
 
     int port;
     //TODO Should be user definable
-    int maxclients;
-    int clientcount = 0;
+    private int maxclients;
+    private int clientcount = 0;
 
-    ArrayList<Socket> clients = new ArrayList<>();
-    HashMap<Socket, String> clientnames = new HashMap<>();
+    private ArrayList<Socket> clients = new ArrayList<>();
+    private HashMap<Socket, String> clientnames = new HashMap<>();
 
-    File config = new File("config.json");
-    ServerConfig cfg;
-    Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    private File config = new File("config.json");
+    private ServerConfig cfg;
+    private Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
-    String motd = "";
-    ArrayList<String> mods;
+    private String motd = "";
+    private ArrayList<String> mods;
+    private HashMap<String, String> modpasswords;
 
     public Server(int port) {
         if (config.exists()) {
@@ -105,7 +106,7 @@ public class Server {
      *               </p>
      */
     private void sendToClient(Socket client, String[] msg) {
-        ObjectOutputStream out = null;
+        ObjectOutputStream out;
         try {
             out = new ObjectOutputStream(client.getOutputStream());
             out.writeObject(msg);
@@ -127,7 +128,7 @@ public class Server {
 
         @Override
         public void run() {
-            Socket socket = null;
+            Socket socket;
             try {
                 mainserver = new ServerSocket(port);
             } catch (IOException e) {
@@ -258,7 +259,7 @@ public class Server {
                                         s.close();
                                         System.out.println("Kicked client " + name);
                                         break;
-                                    } catch (IOException e) {
+                                    } catch (IOException ignored) {
 
                                     }
                                 }
@@ -269,8 +270,10 @@ public class Server {
                         }
                         break;
                     case "online":
-                        if (clientcount == 1) System.out.println("There is currently 1 client connected\nThe following client is connected");
-                        else System.out.println("There are currently " + clientcount + " clients connected\nThe following clients are connected");
+                        if (clientcount == 1)
+                            System.out.println("There is currently 1 client connected\nThe following client is connected");
+                        else
+                            System.out.println("There are currently " + clientcount + " clients connected\nThe following clients are connected");
 
                         for (Socket s : clients) {
                             System.out.print(clientnames.get(s) + " ");
@@ -283,12 +286,59 @@ public class Server {
                         break;
                     case "quit":
                     case "stop":
-                        //TODO: Save current settings (mods, motd, maxclients etc. to config)
+                        //TODO: Fix config saving
+                        //Save current settings / options and write them to the config
+                        cfg.setMaxclients(maxclients);
+                        cfg.setMotd(motd);
+                        cfg.setMods(mods);
+                        cfg.setModpasswords(modpasswords);
+
+                        String newjson = gson.toJson(cfg);
+
+                        try {
+                            PrintWriter pw = new PrintWriter(config);
+                            pw.write(newjson);
+                            pw.close();
+                        } catch (IOException e) {
+                            log("Error while saving config!!");
+                            e.printStackTrace();
+                        }
                         System.exit(0);
                         break;
                     case "setmotd":
+                        if (cmds.length <= 1) {
+                            System.out.println("What should the new motd look like?");
+                        } else {
+                            StringBuilder newmotd = new StringBuilder();
+                            for (int i = 0; i < cmds.length; i++) {
+                                if (cmds.length - 1 == i) {
+                                    newmotd.append(cmds[i]);
+                                } else {
+                                    newmotd.append(cmds[i]).append(" ");
+                                }
+                            }
+
+                            motd = newmotd.toString();
+                            System.out.println("Successfully set motd to \"" + newmotd.toString() + "\"!");
+                        }
                         break;
                     case "setclientlimit":
+                        if (cmds.length <= 1) {
+                            System.out.println("What is the new limit?");
+                        } else {
+                            int newcount;
+                            try {
+                                newcount = Integer.parseInt(cmds[1]);
+                            } catch (NumberFormatException e) {
+                                System.out.println("This is not a number!");
+                                break;
+                            }
+                            if (clientcount > newcount) {
+                                System.out.println("Warning: The max player count is over the limit!");
+                            }
+                            clientcount = newcount;
+                            System.out.println("Successfully changed the client limit to " + newcount + "!");
+                        }
                         break;
                     case "help":
                         System.out.println("current available commands:");

@@ -1,12 +1,14 @@
 package de.failex.fchat.Server;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class ServerConfig {
 
     private String motd = "";
     private ArrayList<String> mods = new ArrayList<>();
     private int maxclients;
+    private HashMap<String, String> modpasswords = new HashMap<>();
 
     public String getMotd() {
         return motd;
@@ -31,5 +33,13 @@ public class ServerConfig {
 
     public void setMaxclients(int maxclients) {
         this.maxclients = maxclients;
+    }
+
+    public HashMap<String, String> getModpasswords() {
+        return modpasswords;
+    }
+
+    public void setModpasswords(HashMap<String, String> modpasswords) {
+        this.modpasswords = modpasswords;
     }
 }
