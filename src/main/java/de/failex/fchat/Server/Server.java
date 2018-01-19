@@ -257,6 +257,16 @@ public class Server {
                         break;
                     case "setclientlimit":
                         break;
+                    case "help":
+                        System.out.println("current available commands:");
+                        System.out.println("kick <nickname>");
+                        System.out.println("addmod <nickname>");
+                        System.out.println("removemod <nickname>");
+                        System.out.println("quit / stop");
+                        System.out.println("setmotd <newmotd>");
+                        System.out.println("setclientlimit <newlimit>");
+                        System.out.println("help");
+                        break;
                     default:
                         System.out.println("Command not found!");
                         break;
