@@ -146,6 +146,20 @@ public class Client {
                                     MainGUI.disconnect();
                                     Thread.currentThread().interrupt();
                                     return;
+                                } else if (msg[2].equals("KICK") && MainGUI.connected) {
+                                    MainGUI.connected = false;
+                                    c.tb_nickname.setDisable(false);
+                                    c.tb_host.setDisable(false);
+                                    c.tb_port.setDisable(false);
+                                    c.btn_connect.setDisable(false);
+                                    //Prevent Not an FX Application Thread error
+                                    Platform.runLater(() -> {
+                                        MainGUI.alert("Kicked", "Kicked by server", "You got kicked by the server", Alert.AlertType.INFORMATION);
+                                    });
+                                    server.close();
+                                    MainGUI.disconnect();
+                                    Thread.currentThread().interrupt();
+                                    return;
                                 }
                                 //TODO: add commands
                                 break;

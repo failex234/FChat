@@ -8,7 +8,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Scanner;
 
 public class Server {
 
@@ -190,7 +189,7 @@ public class Server {
                                 //Check if nickname is already assigned to anyone
                                 if (clientnames.containsValue(msg[1])) {
                                     log("Client " + socket.getInetAddress().toString() + " tried to register as " + msg[1] + " but the nickname is already assigned");
-                                    sendToClient(socket, new String[]{"CMD","", "NICK"});
+                                    sendToClient(socket, new String[]{"CMD", "", "NICK"});
                                     return;
                                 }
                                 if (clientcount >= maxclients) {
@@ -232,7 +231,7 @@ public class Server {
         @Override
         public void run() {
             BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-            while(!Thread.currentThread().isInterrupted()) {
+            while (!Thread.currentThread().isInterrupted()) {
                 String cmd = "";
                 try {
                     cmd = br.readLine();
@@ -243,6 +242,40 @@ public class Server {
                 cmd = cmds[0];
                 switch (cmd) {
                     case "kick":
+                        if (cmds.length <= 1) {
+                            System.out.println("Whom do you want to kick?");
+                        } else {
+                            String name = cmds[1];
+                            boolean kicked = false;
+                            for (Socket s : clients) {
+                                if (clientnames.get(s).equals(name)) {
+                                    kicked = true;
+                                    sendToClient(s, new String[]{"CMD", "", "KICK"});
+                                    clientcount--;
+                                    clients.remove(s);
+                                    clientnames.remove(s);
+                                    try {
+                                        s.close();
+                                        System.out.println("Kicked client " + name);
+                                        break;
+                                    } catch (IOException e) {
+
+                                    }
+                                }
+                            }
+                            if (!kicked) {
+                                System.out.println("Client " + name + " not found!");
+                            }
+                        }
+                        break;
+                    case "online":
+                        if (clientcount == 1) System.out.println("There is currently 1 client connected\nThe following client is connected");
+                        else System.out.println("There are currently " + clientcount + " clients connected\nThe following clients are connected");
+
+                        for (Socket s : clients) {
+                            System.out.print(clientnames.get(s) + " ");
+                        }
+                        if (clients.size() == 0) System.out.print("nobody");
                         break;
                     case "addmod":
                         break;
@@ -259,6 +292,7 @@ public class Server {
                         break;
                     case "help":
                         System.out.println("current available commands:");
+                        System.out.println("online");
                         System.out.println("kick <nickname>");
                         System.out.println("addmod <nickname>");
                         System.out.println("removemod <nickname>");
