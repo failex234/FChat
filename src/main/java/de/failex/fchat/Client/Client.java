@@ -160,6 +160,10 @@ public class Client {
                                     MainGUI.disconnect();
                                     Thread.currentThread().interrupt();
                                     return;
+                                } else if (msg[2].equals("MODC") && MainGUI.connected) {
+                                    String password = msg[3];
+                                    MainGUI.alert("Added as mod", "Added as mod", "You have been added as a moderator! In the future\n" +
+                                            "you'll need the password '" + password + "' to connect to the server", Alert.AlertType.CONFIRMATION);
                                 }
                                 //TODO: add commands
                                 break;

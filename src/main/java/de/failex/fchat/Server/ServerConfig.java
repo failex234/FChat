@@ -8,6 +8,7 @@ public class ServerConfig {
     private String motd = "";
     private ArrayList<String> mods = new ArrayList<>();
     private int maxclients;
+    private int passwordsize;
     private HashMap<String, String> modpasswords = new HashMap<>();
 
     public String getMotd() {
@@ -41,5 +42,13 @@ public class ServerConfig {
 
     public void setModpasswords(HashMap<String, String> modpasswords) {
         this.modpasswords = modpasswords;
+    }
+
+    public int getPasswordsize() {
+        return passwordsize;
+    }
+
+    public void setPasswordsize(int passwordsize) {
+        this.passwordsize = passwordsize;
     }
 }

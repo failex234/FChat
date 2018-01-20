@@ -6,8 +6,10 @@ import com.google.gson.GsonBuilder;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Random;
 
 public class Server {
 
@@ -19,6 +21,7 @@ public class Server {
     //TODO Should be user definable
     private int maxclients;
     private int clientcount = 0;
+    private int passwordsize;
 
     private ArrayList<Socket> clients = new ArrayList<>();
     private HashMap<Socket, String> clientnames = new HashMap<>();
@@ -117,6 +120,40 @@ public class Server {
         }
     }
 
+    public String generatePassword() {
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_/";
+        Random rnd = new Random();
+        StringBuilder temp = new StringBuilder();
+
+        for (int i = 0; i < passwordsize; i++) temp.append(chars.charAt(rnd.nextInt(chars.length())));
+
+        return temp.toString();
+
+    }
+
+    public boolean isMod(Socket s) {
+        return mods.contains(s);
+    }
+
+    public String hashPassword(String password) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-512");
+            md.update(password.getBytes());
+
+            byte byteData[] = md.digest();
+
+            //convert the byte to hex format method 1
+            StringBuffer sb = new StringBuffer();
+            for (int i = 0; i < byteData.length; i++) {
+                sb.append(Integer.toString((byteData[i] & 0xff) + 0x100, 16).substring(1));
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     private void log(String msg) {
         System.out.println("[LOG] " + msg);
     }
@@ -153,7 +190,7 @@ public class Server {
 
         Socket socket;
 
-        public SocketThread(Socket socket) {
+        SocketThread(Socket socket) {
             this.socket = socket;
         }
 
@@ -278,9 +315,34 @@ public class Server {
                         for (Socket s : clients) {
                             System.out.print(clientnames.get(s) + " ");
                         }
-                        if (clients.size() == 0) System.out.print("nobody");
+                        if (clients.size() == 0) System.out.println("nobody");
                         break;
                     case "addmod":
+                        if (cmds.length <= 1) {
+                            System.out.println("Whom do you want to add as a mod?");
+                        } else {
+                            String name = cmds[1];
+                            boolean modded = false;
+                            for (Socket s : clients) {
+                                if (clientnames.get(s).equals(name)) {
+                                    if (isMod(s)) {
+                                        System.out.println(name + " is already a mod!");
+                                        break;
+                                    } else {
+                                        modded = true;
+                                        System.out.println(name + " is now a mod!");
+                                        String password = generatePassword();
+                                        sendToClient(s, new String[]{"CMD", "", "MODC", password});
+                                        mods.add(name);
+                                        modpasswords.put(name, hashPassword(password));
+                                        break;
+                                    }
+                                }
+                            }
+                            if (!modded) {
+                                System.out.println(name + " not found!");
+                            }
+                        }
                         break;
                     case "removemod":
                         break;
@@ -292,6 +354,7 @@ public class Server {
                         cfg.setMotd(motd);
                         cfg.setMods(mods);
                         cfg.setModpasswords(modpasswords);
+                        cfg.setPasswordsize(passwordsize);
 
                         String newjson = gson.toJson(cfg);
 
