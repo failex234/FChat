@@ -310,7 +310,7 @@ public class Server {
                             System.out.println("What should the new motd look like?");
                         } else {
                             StringBuilder newmotd = new StringBuilder();
-                            for (int i = 0; i < cmds.length; i++) {
+                            for (int i = 1; i < cmds.length; i++) {
                                 if (cmds.length - 1 == i) {
                                     newmotd.append(cmds[i]);
                                 } else {
