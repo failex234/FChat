@@ -37,6 +37,7 @@ public class Server {
     public Server(int port) {
         if (config.exists()) {
             log("Config found, reading config");
+            System.out.printf("");
 
             try (BufferedReader reader = new BufferedReader(new FileReader(config))) {
                 StringBuilder sb = new StringBuilder();
@@ -345,6 +346,28 @@ public class Server {
                         }
                         break;
                     case "removemod":
+                        if (cmds.length <= 1) {
+                            System.out.println("Whom do you want to remove as a mod?");
+                        } else {
+                            String name = cmds[1];
+                            boolean userfound = false;
+
+                            for (Socket s : clients) {
+                                if (clientnames.get(s).equals(name)) {
+                                    if (!isMod(s)) {
+                                        System.out.println(name + " is no mod!");
+                                        userfound = true;
+                                    } else {
+                                        mods.remove(s);
+                                        sendToClient(s, new String[]{"CMD", "", "MODR"});
+                                        System.out.println(name + " is no longer a mod!");
+                                        userfound = true;
+                                    }
+                                }
+                            }
+
+                            if (!userfound) System.out.println("User " + name + " not found!");
+                        }
                         break;
                     case "quit":
                     case "stop":
