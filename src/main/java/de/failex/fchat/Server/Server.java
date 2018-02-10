@@ -21,7 +21,7 @@ public class Server {
     //TODO Should be user definable
     private int maxclients;
     private int clientcount = 0;
-    private int passwordsize;
+    private int passwordsize = 8;
 
     private ArrayList<Socket> clients = new ArrayList<>();
     private HashMap<Socket, String> clientnames = new HashMap<>();
@@ -33,8 +33,11 @@ public class Server {
     private String motd = "";
     private ArrayList<String> mods;
     private HashMap<String, String> modpasswords;
+    private HashMap<String, Boolean> loggedinmods;
 
     public Server(int port) {
+        modpasswords = new HashMap<>();
+        loggedinmods = new HashMap<>();
         if (config.exists()) {
             log("Config found, reading config");
             System.out.printf("");
@@ -185,7 +188,7 @@ public class Server {
     }
 
     /**
-     * socket thread that receives packets and then processed
+     * socket thread that receives the packets and processes them
      */
     class SocketThread implements Runnable {
 
@@ -244,6 +247,35 @@ public class Server {
                                     }
                                     log("Client " + socket.getInetAddress().toString() + " registered as " + msg[1]);
                                     sendToAllClients(new String[]{"MSG", "", msg[1] + " joined the chat room!"});
+                                }
+                            } else if (msg[2].equals("REGMOD")) {
+                                if (!clientnames.containsValue(msg[1])) {
+                                    log("Client " + socket.getInetAddress().toString() + " tried to login as a mod before logging normally before");
+                                    sendToClient(socket, new String[]{"CMD", "", "NOTREG"});
+                                } else {
+                                    if (isMod(socket)) {
+                                        if (msg.length < 4) {
+                                            log("Client " + socket.getInetAddress().toString() + " tried to login as a mod but failed to send a password");
+                                            sendToClient(socket, new String[]{"CMD", "", "NOPASSWD"});
+                                        } else {
+                                            if (!loggedinmods.get(msg[1])) {
+                                                if (modpasswords.get(msg[1]).equals(msg[3])) {
+                                                    log("Client " + socket.getInetAddress().toString() + " logged in as a mod!");
+                                                    loggedinmods.put(msg[1], true);
+                                                    sendToClient(socket, new String[]{"CMD", "", "REGSUCCESS"});
+                                                } else {
+                                                    log("Client " + socket.getInetAddress().toString() + " tried to login as a mod but has a wrong password!");
+                                                    sendToClient(socket, new String[]{"CMD", "", "WRONGPASSWD"});
+                                                }
+                                            } else {
+                                                log("Client " + socket.getInetAddress().toString() + " tried to login as a mod even though he is already logged in");
+                                                sendToClient(socket, new String[]{"CMD", "", "ALREADYLOGGED"});
+                                            }
+                                        }
+                                    } else {
+                                        log("Client " + socket.getInetAddress().toString() + " tried to login as a mod even though he is no mod");
+                                        sendToClient(socket, new String[]{"CMD", "", "NOMOD"});
+                                    }
                                 }
                             }
 
@@ -309,9 +341,9 @@ public class Server {
                         break;
                     case "online":
                         if (clientcount == 1)
-                            System.out.println("There is currently 1 client connected\nThe following client is connected");
+                            System.out.println("There is currently 1 client out of " + maxclients + " connected\nThe following client is connected");
                         else
-                            System.out.println("There are currently " + clientcount + " clients connected\nThe following clients are connected");
+                            System.out.println("There are currently " + clientcount + " clients out of " + maxclients + " connected\nThe following clients are connected");
 
                         for (Socket s : clients) {
                             System.out.print(clientnames.get(s) + " ");
@@ -333,6 +365,8 @@ public class Server {
                                         modded = true;
                                         System.out.println(name + " is now a mod!");
                                         String password = generatePassword();
+                                        System.out.println(password);
+                                        System.out.println(hashPassword(password));
                                         sendToClient(s, new String[]{"CMD", "", "MODC", password});
                                         mods.add(name);
                                         modpasswords.put(name, hashPassword(password));
@@ -381,6 +415,8 @@ public class Server {
 
                         String newjson = gson.toJson(cfg);
 
+                        config.delete();
+                        
                         try {
                             PrintWriter pw = new PrintWriter(config);
                             pw.write(newjson);
@@ -422,7 +458,7 @@ public class Server {
                             if (clientcount > newcount) {
                                 System.out.println("Warning: The max player count is over the limit!");
                             }
-                            clientcount = newcount;
+                            maxclients = newcount;
                             System.out.println("Successfully changed the client limit to " + newcount + "!");
                         }
                         break;

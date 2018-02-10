@@ -44,11 +44,14 @@ public class Client {
             incoming.start();
 
         } catch (UnknownHostException e) {
-            MainGUI.alert("Connection failed", "Connection failed!", "Unable to connect to the server!\n", Alert.AlertType.ERROR);
+            Platform.runLater(() ->
+                    MainGUI.alert("Connection failed", "Connection failed!", "Unable to connect to the server!\n", Alert.AlertType.ERROR));
         } catch (ConnectException e) {
-            MainGUI.alert("Server not online", "Server not online!", "There is no server online under that address!\n", Alert.AlertType.ERROR);
+            Platform.runLater(() ->
+                    MainGUI.alert("Server not online", "Server not online!", "There is no server online under that address!\n", Alert.AlertType.ERROR));
         } catch (SocketException e) {
-            MainGUI.alert("Invalid address", "Invalid address", "You entered an invalid address!\n", Alert.AlertType.ERROR);
+            Platform.runLater(() ->
+                    MainGUI.alert("Invalid address", "Invalid address", "You entered an invalid address!\n", Alert.AlertType.ERROR));
         } catch (IOException e) {
             printException(e);
         }
@@ -83,7 +86,8 @@ public class Client {
         PrintWriter pw = new PrintWriter(sw);
         e.printStackTrace(pw);
         String trace = sw.toString();
-        MainGUI.alert("Error", "Error", "An error occured, please report the following\n" + trace, Alert.AlertType.ERROR);
+        Platform.runLater(() ->
+                MainGUI.alert("Error", "Error", "An error occured, please report the following\n" + trace, Alert.AlertType.ERROR));
     }
 
     /**
@@ -108,12 +112,14 @@ public class Client {
                                 if (!msg[1].isEmpty()) {
                                     String addtolv = "[" + msg[1] + "] " + msg[2];
                                     ObservableList<String> oldlist = c.lv_msg.getItems();
-                                    oldlist.add(addtolv);
+                                    Platform.runLater(() ->
+                                            oldlist.add(addtolv));
                                     c.lv_msg.setItems(oldlist);
                                 } else {
                                     String addtolv = "*** " + msg[2] + " ***";
                                     ObservableList<String> oldlist = c.lv_msg.getItems();
-                                    oldlist.add(addtolv);
+                                    Platform.runLater(() ->
+                                            oldlist.add(addtolv));
                                     c.lv_msg.setItems(oldlist);
                                 }
                                 break;
@@ -153,19 +159,39 @@ public class Client {
                                     c.tb_port.setDisable(false);
                                     c.btn_connect.setDisable(false);
                                     //Prevent Not an FX Application Thread error
-                                    Platform.runLater(() -> {
-                                        MainGUI.alert("Kicked", "Kicked by server", "You got kicked by the server", Alert.AlertType.INFORMATION);
-                                    });
+                                    Platform.runLater(() -> MainGUI.alert("Kicked", "Kicked by server", "You got kicked by the server", Alert.AlertType.INFORMATION));
                                     server.close();
                                     MainGUI.disconnect();
                                     Thread.currentThread().interrupt();
                                     return;
                                 } else if (msg[2].equals("MODC") && MainGUI.connected) {
                                     String password = msg[3];
-                                    MainGUI.alert("Added as mod", "Added as mod", "You have been added as a moderator! In the future\n" +
-                                            "you'll need the password '" + password + "' to connect to the server", Alert.AlertType.CONFIRMATION);
+                                    Platform.runLater(() ->
+                                            MainGUI.alert("Added as mod", "Added as mod", "You have been added as a moderator! In the future\n" +
+                                                    "you'll need the password '" + password + "' to connect to the server", Alert.AlertType.CONFIRMATION));
+                                } else if (msg[2].equals("NOTREG")) {
+                                    MainGUI.connected = false;
+                                    c.tb_nickname.setDisable(false);
+                                    c.tb_host.setDisable(false);
+                                    c.tb_port.setDisable(false);
+                                    c.btn_connect.setDisable(false);
+                                    Platform.runLater(() -> MainGUI.alert("Login failed", "Logged failed", "The Mod-login has failed due to a missing registration!", Alert.AlertType.ERROR));
+                                    server.close();
+                                    MainGUI.disconnect();
+                                    Thread.currentThread().interrupt();
+                                    return;
+                                } else if (msg[2].equals("NOPASSWD")) {
+                                    Platform.runLater(() -> MainGUI.alert("Missing password", "Missing password", "You failed to enter a password", Alert.AlertType.ERROR));
+                                } else if (msg[2].equals("REGSUCCESS")) {
+                                    Platform.runLater(() -> MainGUI.alert("Login successful", "Success!", "You have successfully logged in as a mod", Alert.AlertType.INFORMATION));
+                                    //TODO More GUI mod related stuff here
+                                } else if (msg[2].equals("WRONGPASSWD")) {
+                                    Platform.runLater(() -> MainGUI.alert("Wrong password", "Incorrect password", "The password you have entered is wrong!", Alert.AlertType.ERROR));
+                                } else if (msg[2].equals("ALREADYLOGGED")) {
+                                    Platform.runLater(() -> MainGUI.alert("Already logged in", "Already a mod", "You are already logged in as a mod!", Alert.AlertType.INFORMATION));
+                                } else if (msg[2].equals("NOMOD")) {
+                                    Platform.runLater(() -> MainGUI.alert("No mod", "No mod", "You're no mod so you can't login as one!", Alert.AlertType.ERROR));
                                 }
-                                //TODO: add commands
                                 break;
                         }
                     }

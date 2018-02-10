@@ -75,7 +75,7 @@ public class MainGUI {
                 c.tb_msg.setText("");
                 c.btn_send.setDisable(true);
             } else {
-                alert("Not connected", "Not connected", "You're not connected to a server yet!", Alert.AlertType.INFORMATION);
+                alert("Not connected", "Not connected", "You're not connected to a server!", Alert.AlertType.INFORMATION);
             }
         });
     }

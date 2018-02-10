@@ -1,0 +1,9 @@
+{
+  "motd": "",
+  "mods": [
+    "failex"
+  ],
+  "maxclients": 12,
+  "passwordsize": 8,
+  "modpasswords": {}
+}
