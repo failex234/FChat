@@ -405,7 +405,6 @@ public class Server {
                         break;
                     case "quit":
                     case "stop":
-                        //TODO: Fix config saving
                         //Save current settings / options and write them to the config
                         cfg.setMaxclients(maxclients);
                         cfg.setMotd(motd);
@@ -416,7 +415,7 @@ public class Server {
                         String newjson = gson.toJson(cfg);
 
                         config.delete();
-                        
+
                         try {
                             PrintWriter pw = new PrintWriter(config);
                             pw.write(newjson);
