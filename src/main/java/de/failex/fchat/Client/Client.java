@@ -5,9 +5,12 @@ import de.failex.fchat.GUI.MainGUIController;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Alert;
+import javafx.scene.control.TextField;
+import org.apache.commons.lang3.ArrayUtils;
 
 import java.io.*;
 import java.net.*;
+import java.util.Collections;
 
 public class Client {
 
@@ -60,11 +63,12 @@ public class Client {
     /**
      * Sends a message or a command to the server
      *
-     * @param type message or command. 0 for message, not 0 for command
-     * @param msg  the content of the message / what command
+     * @param type  message or command. 0 for message, not 0 for command
+     * @param msg   the message itself / the command
+     * @param extra some extra content to send
      */
-    public void sendMessage(int type, String msg) {
-        String[] temp = {type == 0 ? "MSG" : "CMD", nickname, msg};
+    public void sendMessage(int type, String msg, String... extra) {
+        String[] temp = ArrayUtils.addAll(new String[]{type == 0 ? "MSG" : "CMD", nickname, msg}, extra);
         try {
             out = new ObjectOutputStream(server.getOutputStream());
             out.flush();
@@ -191,6 +195,18 @@ public class Client {
                                     Platform.runLater(() -> MainGUI.alert("Already logged in", "Already a mod", "You are already logged in as a mod!", Alert.AlertType.INFORMATION));
                                 } else if (msg[2].equals("NOMOD")) {
                                     Platform.runLater(() -> MainGUI.alert("No mod", "No mod", "You're no mod so you can't login as one!", Alert.AlertType.ERROR));
+                                } else if (msg[2].equals("MODL")) {
+                                    final String[] passwd = {""};
+                                    Platform.runLater(() -> {
+                                        Alert a = new Alert(Alert.AlertType.INFORMATION);
+                                        a.setTitle("Login");
+                                        a.setHeaderText("Please enter your password!");
+                                        TextField tb_passwd = new TextField();
+                                        a.getDialogPane().setContent(tb_passwd);
+                                        a.setOnCloseRequest((e) -> passwd[0] = tb_passwd.getText());
+                                        a.showAndWait();
+                                        sendMessage(1, "REGMOD", passwd);
+                                    });
                                 }
                                 break;
                         }

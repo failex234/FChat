@@ -38,6 +38,7 @@ public class Server {
     public Server(int port) {
         modpasswords = new HashMap<>();
         loggedinmods = new HashMap<>();
+        loggedinmods.put("nothing", false);
         if (config.exists()) {
             log("Config found, reading config");
             System.out.printf("");
@@ -135,7 +136,7 @@ public class Server {
 
     }
 
-    public boolean isMod(Socket s) {
+    public boolean isMod(String s) {
         return mods.contains(s);
     }
 
@@ -247,18 +248,21 @@ public class Server {
                                     }
                                     log("Client " + socket.getInetAddress().toString() + " registered as " + msg[1]);
                                     sendToAllClients(new String[]{"MSG", "", msg[1] + " joined the chat room!"});
+
+                                    //Send Mod login request to client
+                                    if (mods.contains(msg[1])) sendToClient(socket, new String[]{"CMD", "", "MODL"});
                                 }
                             } else if (msg[2].equals("REGMOD")) {
                                 if (!clientnames.containsValue(msg[1])) {
                                     log("Client " + socket.getInetAddress().toString() + " tried to login as a mod before logging normally before");
                                     sendToClient(socket, new String[]{"CMD", "", "NOTREG"});
                                 } else {
-                                    if (isMod(socket)) {
+                                    if (isMod(msg[1])) {
                                         if (msg.length < 4) {
                                             log("Client " + socket.getInetAddress().toString() + " tried to login as a mod but failed to send a password");
                                             sendToClient(socket, new String[]{"CMD", "", "NOPASSWD"});
                                         } else {
-                                            if (!loggedinmods.get(msg[1])) {
+                                            if (!loggedinmods.containsKey(msg[1]) && loggedinmods.get(msg[1]) == null) {
                                                 if (modpasswords.get(msg[1]).equals(msg[3])) {
                                                     log("Client " + socket.getInetAddress().toString() + " logged in as a mod!");
                                                     loggedinmods.put(msg[1], true);
@@ -358,7 +362,7 @@ public class Server {
                             boolean modded = false;
                             for (Socket s : clients) {
                                 if (clientnames.get(s).equals(name)) {
-                                    if (isMod(s)) {
+                                    if (isMod(clientnames.get(s))) {
                                         System.out.println(name + " is already a mod!");
                                         break;
                                     } else {
@@ -388,7 +392,7 @@ public class Server {
 
                             for (Socket s : clients) {
                                 if (clientnames.get(s).equals(name)) {
-                                    if (!isMod(s)) {
+                                    if (!isMod(clientnames.get(s))) {
                                         System.out.println(name + " is no mod!");
                                         userfound = true;
                                     } else {

@@ -20,6 +20,13 @@ public class MainGUI {
 
         c.btn_send.setDisable(true);
 
+        c.btn_kick.setDisable(true);
+        c.btn_ban.setDisable(true);
+        c.btn_clear.setDisable(true);
+        c.btn_broadcast.setDisable(true);
+
+        c.title.setVisible(false);
+
         //TODO remove horizontal scrolling
 
         //Only enable connect button when both the hostname and port field are not empty
