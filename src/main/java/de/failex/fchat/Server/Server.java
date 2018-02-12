@@ -263,7 +263,7 @@ public class Server {
                                             sendToClient(socket, new String[]{"CMD", "", "NOPASSWD"});
                                         } else {
                                             if (!loggedinmods.containsKey(msg[1]) && loggedinmods.get(msg[1]) == null) {
-                                                if (modpasswords.get(msg[1]).equals(msg[3])) {
+                                                if (modpasswords.get(msg[1]).equals(hashPassword(msg[3]))) {
                                                     log("Client " + socket.getInetAddress().toString() + " logged in as a mod!");
                                                     loggedinmods.put(msg[1], true);
                                                     sendToClient(socket, new String[]{"CMD", "", "REGSUCCESS"});
@@ -469,15 +469,46 @@ public class Server {
                             System.out.println("Successfully changed the client limit to " + newcount + "!");
                         }
                         break;
+                    case "getclientlimit":
+                        System.out.println("The client limit is set to " + maxclients + " clients");
+                        break;
+                    case "getmodlist":
+                        if (mods.size() == 0) {
+                            System.out.println("No one is a mod. Add some with addmod <nickname>!");
+                        } else {
+                            for (String client : mods) {
+                                System.out.println(client);
+                            }
+                        }
+                        break;
+                    case "ismod":
+                        if (cmds.length <= 1) {
+                            System.out.println("Whom do you want to check?");
+                        } else {
+                            if (isMod(cmds[1])) System.out.println(cmds[1] + " is a mod");
+                            else System.out.println(cmds[1] + " is not a mod");
+                        }
+                        break;
+                    case "ban":
+                        //Future command
+                        break;
+                    case "unban":
+                        //Future command
+                        break;
                     case "help":
                         System.out.println("current available commands:");
                         System.out.println("online");
                         System.out.println("kick <nickname>");
+                        System.out.println("ban <nickname>");
+                        System.out.println("unban <nickname>");
                         System.out.println("addmod <nickname>");
                         System.out.println("removemod <nickname>");
+                        System.out.println("ismod <nickname>");
+                        System.out.println("getmodlist");
                         System.out.println("quit / stop");
                         System.out.println("setmotd <newmotd>");
                         System.out.println("setclientlimit <newlimit>");
+                        System.out.println("getclientlimit");
                         System.out.println("help");
                         break;
                     default:

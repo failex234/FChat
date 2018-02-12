@@ -10,7 +10,6 @@ import org.apache.commons.lang3.ArrayUtils;
 
 import java.io.*;
 import java.net.*;
-import java.util.Collections;
 
 public class Client {
 
@@ -188,7 +187,11 @@ public class Client {
                                     Platform.runLater(() -> MainGUI.alert("Missing password", "Missing password", "You failed to enter a password", Alert.AlertType.ERROR));
                                 } else if (msg[2].equals("REGSUCCESS")) {
                                     Platform.runLater(() -> MainGUI.alert("Login successful", "Success!", "You have successfully logged in as a mod", Alert.AlertType.INFORMATION));
-                                    //TODO More GUI mod related stuff here
+
+                                    c.btn_broadcast.setDisable(false);
+                                    c.btn_clear.setDisable(false);
+                                    c.btn_ban.setDisable(false);
+                                    c.btn_kick.setDisable(false);
                                 } else if (msg[2].equals("WRONGPASSWD")) {
                                     Platform.runLater(() -> MainGUI.alert("Wrong password", "Incorrect password", "The password you have entered is wrong!", Alert.AlertType.ERROR));
                                 } else if (msg[2].equals("ALREADYLOGGED")) {
