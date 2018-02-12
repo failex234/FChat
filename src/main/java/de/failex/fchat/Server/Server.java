@@ -31,14 +31,11 @@ public class Server {
     private Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
     private String motd = "";
-    private ArrayList<String> mods;
-    private HashMap<String, String> modpasswords;
-    private HashMap<String, Boolean> loggedinmods;
+    private ArrayList<String> mods = new ArrayList<>();
+    private HashMap<String, String> modpasswords = new HashMap<>();
+    private HashMap<String, Boolean> loggedinmods = new HashMap<>();
 
     public Server(int port) {
-        modpasswords = new HashMap<>();
-        loggedinmods = new HashMap<>();
-        loggedinmods.put("nothing", false);
         if (config.exists()) {
             log("Config found, reading config");
             System.out.printf("");
@@ -55,6 +52,7 @@ public class Server {
                 motd = cfg.getMotd();
                 mods = cfg.getMods();
                 maxclients = cfg.getMaxclients();
+                modpasswords = cfg.getModpasswords();
             } catch (IOException e) {
                 log("Error reading config");
                 e.printStackTrace();
@@ -262,7 +260,7 @@ public class Server {
                                             log("Client " + socket.getInetAddress().toString() + " tried to login as a mod but failed to send a password");
                                             sendToClient(socket, new String[]{"CMD", "", "NOPASSWD"});
                                         } else {
-                                            if (!loggedinmods.containsKey(msg[1]) && loggedinmods.get(msg[1]) == null) {
+                                            if (!loggedinmods.containsKey(msg[1])) {
                                                 if (modpasswords.get(msg[1]).equals(hashPassword(msg[3]))) {
                                                     log("Client " + socket.getInetAddress().toString() + " logged in as a mod!");
                                                     loggedinmods.put(msg[1], true);
@@ -289,9 +287,14 @@ public class Server {
                     if (clients.contains(socket)) {
                         log("Client " + socket.getInetAddress().toString() + " aka " + clientnames.get(socket) + " disconnected!");
                         sendToAllClients(new String[]{"MSG", "", clientnames.get(socket) + " left the chat room"});
+
+                        if (isMod(clientnames.get(socket))) {
+                            loggedinmods.remove(clientnames.get(socket));
+                        }
                         clients.remove(socket);
                         clientnames.remove(socket);
                         clientcount--;
+
                     }
                     return;
                 } catch (ClassNotFoundException e) {
@@ -396,12 +399,22 @@ public class Server {
                                         System.out.println(name + " is no mod!");
                                         userfound = true;
                                     } else {
-                                        mods.remove(s);
+                                        mods.remove(name);
+                                        modpasswords.remove(name);
+                                        loggedinmods.remove(name);
                                         sendToClient(s, new String[]{"CMD", "", "MODR"});
                                         System.out.println(name + " is no longer a mod!");
                                         userfound = true;
                                     }
                                 }
+                            }
+
+                            if (mods.contains(name)) {
+                                mods.remove(name);
+                                modpasswords.remove(name);
+                                loggedinmods.remove(name);
+                                System.out.println(name + " is no longer a mod!");
+                                userfound = true;
                             }
 
                             if (!userfound) System.out.println("User " + name + " not found!");
@@ -495,6 +508,12 @@ public class Server {
                     case "unban":
                         //Future command
                         break;
+                    case "getmodpasswords":
+                        if (modpasswords.isEmpty()) System.out.println("No Modpasswords saved!");
+                        for (String key : modpasswords.keySet()) {
+                            System.out.println(key + " -> " + modpasswords.get(key));
+                        }
+                        break;
                     case "help":
                         System.out.println("current available commands:");
                         System.out.println("online");
@@ -505,6 +524,7 @@ public class Server {
                         System.out.println("removemod <nickname>");
                         System.out.println("ismod <nickname>");
                         System.out.println("getmodlist");
+                        System.out.println("getmodpasswords");
                         System.out.println("quit / stop");
                         System.out.println("setmotd <newmotd>");
                         System.out.println("setclientlimit <newlimit>");
