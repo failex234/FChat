@@ -41,4 +41,22 @@ public class MainGUIController {
 
     @FXML
     public TextField tb_nickname;
+
+    @FXML
+    public Button btn_clear;
+
+    @FXML
+    public Button btn_broadcast;
+
+    @FXML
+    public Button btn_kick;
+
+    @FXML
+    public Button btn_ban;
+
+    @FXML
+    public Button btn_msg;
+
+    @FXML
+    public ListView lv_clients;
 }

@@ -454,6 +454,10 @@ public class Server {
                                 System.out.println("This is not a number!");
                                 break;
                             }
+                            if (clientcount < 1) {
+                                System.out.println("Error: This number is too low!");
+                                break;
+                            }
                             if (clientcount > newcount) {
                                 System.out.println("Warning: The max player count is over the limit!");
                             }
