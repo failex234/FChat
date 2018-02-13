@@ -235,8 +235,11 @@ public class Server {
                         //System.out.print("\n");
 
                         if (msg[0].equals("MSG")) {
-                            logf("Message from %s (%s): %s", msg[1], socket.getInetAddress().toString(), msg[2]);
-                            sendToAllClients(msg);
+                            //Only send message when client didn't spam newlines
+                            if (getCount(msg[2], '\n') < 2) {
+                                logf("Message from %s (%s): %s", msg[1], socket.getInetAddress().toString(), msg[2]);
+                                sendToAllClients(msg);
+                            }
 
                         } else if (msg[0].equals("CMD")) {
                             if (msg[2].equals("REG")) {
@@ -347,7 +350,7 @@ public class Server {
                                     clientnames.remove(s);
                                     try {
                                         s.close();
-                                        System.out.printf("Kicked client %s", name);
+                                        System.out.printf("Kicked client %s\n", name);
                                         break;
                                     } catch (IOException ignored) {
 
@@ -355,15 +358,15 @@ public class Server {
                                 }
                             }
                             if (!kicked) {
-                                System.out.printf("Client %s not found!", name);
+                                System.out.printf("Client %s not found!\n", name);
                             }
                         }
                         break;
                     case "online":
                         if (clientcount == 1)
-                            System.out.printf("There is currently 1 client out of %d connected\nThe following client is connected", maxclients);
+                            System.out.printf("There is currently 1 client out of %d connected\nThe following client is connected\n", maxclients);
                         else
-                            System.out.printf("There are currently %d clients out of %d connected\nThe following clients are connected", clientcount, maxclients);
+                            System.out.printf("There are currently %d clients out of %d connected\nThe following clients are connected\n", clientcount, maxclients);
 
                         for (Socket s : clients) {
                             System.out.print(clientnames.get(s) + " ");
@@ -379,11 +382,11 @@ public class Server {
                             for (Socket s : clients) {
                                 if (clientnames.get(s).equals(name)) {
                                     if (isMod(clientnames.get(s))) {
-                                        System.out.printf("%s is already a mod!", name);
+                                        System.out.printf("%s is already a mod!\n", name);
                                         break;
                                     } else {
                                         modded = true;
-                                        System.out.printf("%s is now a mod!", name);
+                                        System.out.printf("%s is now a mod!\n", name);
                                         String password = generatePassword();
                                         System.out.println(password);
                                         System.out.println(hashPassword(password));
@@ -395,7 +398,7 @@ public class Server {
                                 }
                             }
                             if (!modded) {
-                                System.out.printf("%s not found!", name);
+                                System.out.printf("%s not found!\n", name);
                             }
                         }
                         break;
@@ -409,14 +412,14 @@ public class Server {
                             for (Socket s : clients) {
                                 if (clientnames.get(s).equals(name)) {
                                     if (!isMod(clientnames.get(s))) {
-                                        System.out.printf("%s is no mod!", name);
+                                        System.out.printf("%s is no mod!\n", name);
                                         userfound = true;
                                     } else {
                                         mods.remove(name);
                                         modpasswords.remove(name);
                                         loggedinmods.remove(name);
                                         sendToClient(s, new String[]{"CMD", "", "MODR"});
-                                        System.out.printf("%s is no longer a mod!", name);
+                                        System.out.printf("%s is no longer a mod!\n", name);
                                         userfound = true;
                                     }
                                 }
@@ -426,11 +429,11 @@ public class Server {
                                 mods.remove(name);
                                 modpasswords.remove(name);
                                 loggedinmods.remove(name);
-                                System.out.printf("%s is no longer a mod!", name);
+                                System.out.printf("%s is no longer a mod!\n", name);
                                 userfound = true;
                             }
 
-                            if (!userfound) System.out.printf("User %s not found!", name);
+                            if (!userfound) System.out.printf("User %s not found!\n", name);
                         }
                         break;
                     case "quit":
@@ -470,7 +473,7 @@ public class Server {
                             }
 
                             motd = newmotd.toString();
-                            System.out.printf("Successfully set motd to \"%s\"!", newmotd.toString());
+                            System.out.printf("Successfully set motd to \"%s\"!\n", newmotd.toString());
                         }
                         break;
                     case "setclientlimit":
@@ -492,11 +495,11 @@ public class Server {
                                 System.out.println("Warning: The max player count is over the limit!");
                             }
                             maxclients = newcount;
-                            System.out.printf("Successfully changed the client limit to %d!", newcount);
+                            System.out.printf("Successfully changed the client limit to %d!\n", newcount);
                         }
                         break;
                     case "getclientlimit":
-                        System.out.printf("The client limit is set to %d clients", maxclients);
+                        System.out.printf("The client limit is set to %d clients\n", maxclients);
                         break;
                     case "getmodlist":
                         if (mods.size() == 0) {
@@ -511,8 +514,8 @@ public class Server {
                         if (cmds.length <= 1) {
                             System.out.println("Whom do you want to check?");
                         } else {
-                            if (isMod(cmds[1])) System.out.printf("%s is a mod", cmds[1]);
-                            else System.out.printf("%s is not a mod", cmds[1]);
+                            if (isMod(cmds[1])) System.out.printf("%s is a mod\n", cmds[1]);
+                            else System.out.printf("%s is not a mod\n", cmds[1]);
                         }
                         break;
                     case "ban":
@@ -550,5 +553,21 @@ public class Server {
                 }
             }
         }
+    }
+
+    /**
+     * Counts the occurrences of a character in a string
+     *
+     * @param string the string to search through
+     * @param search the character to count
+     * @return the number of occurrences of the character in the string
+     */
+    public int getCount(String string, char search) {
+        int count = 0;
+        for (char c : string.toCharArray()) {
+            if (c == search) count++;
+        }
+
+        return count;
     }
 }

@@ -27,7 +27,7 @@ public class MainGUI {
 
         c.title.setVisible(false);
 
-        //TODO remove horizontal scrolling
+        //TODO remove horizontal scrolling !important
 
         //Only enable connect button when both the hostname and port field are not empty
         c.tb_host.setOnKeyTyped(event -> {
@@ -77,7 +77,7 @@ public class MainGUI {
         //Send the message to the server
         c.btn_send.setOnMouseClicked(event -> {
             if (connected) {
-                if (getCount(c.tb_msg.getText(), '\n') > 1) {
+                if (getCount(c.tb_msg.getText(), '\n') > 2) {
                     alert("Too many line breaks", "Too many line breaks", "You're message contains too many line breaks!", Alert.AlertType.WARNING);
                     return;
                 }
