@@ -77,6 +77,11 @@ public class MainGUI {
         //Send the message to the server
         c.btn_send.setOnMouseClicked(event -> {
             if (connected) {
+                if (getCount(c.tb_msg.getText(), '\n') > 1) {
+                    alert("Too many line breaks", "Too many line breaks", "You're message contains too many line breaks!", Alert.AlertType.WARNING);
+                    return;
+                }
+
                 //Type 0 = MSG, Type 1 = CMD
                 cl.sendMessage(0, c.tb_msg.getText());
                 c.tb_msg.setText("");
@@ -89,10 +94,11 @@ public class MainGUI {
 
     /**
      * Displays an alert
-     * @param title alert title
-     * @param header alert header
+     *
+     * @param title   alert title
+     * @param header  alert header
      * @param content alert content
-     * @param type alert type
+     * @param type    alert type
      */
     public static void alert(String title, String header, String content, Alert.AlertType type) {
         Alert a = new Alert(type);
@@ -115,5 +121,21 @@ public class MainGUI {
 
     public static void disconnect() {
         cl = null;
+    }
+
+    /**
+     * Counts the occurrences of a character in a string
+     *
+     * @param string the string to search through
+     * @param search the character to count
+     * @return the number of occurrences of the character in the string
+     */
+    public int getCount(String string, char search) {
+        int count = 0;
+        for (char c : string.toCharArray()) {
+            if (c == search) count++;
+        }
+
+        return count;
     }
 }

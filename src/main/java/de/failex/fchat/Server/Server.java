@@ -78,7 +78,7 @@ public class Server {
             }
         }
         this.port = port;
-        log("Server started successfully! listening for connections on port " + port);
+        logf("Server started successfully! listening for connections on port %d", port);
         this.interpreter = new Thread(new InterpreterThread());
         interpreter.start();
         this.serverthread = new Thread(new ServerThread());
@@ -157,8 +157,21 @@ public class Server {
         }
     }
 
+    /**
+     * Log to the console
+     * @param msg the message to log
+     */
     private void log(String msg) {
         System.out.println("[LOG] " + msg);
+    }
+
+    /**
+     * Log a formatted message to the console
+     * @param format the format to print
+     * @param objs the objects to insert into the format
+     */
+    private void logf(String format, Object... objs) {
+        System.out.printf("[LOG] " + format + "\n", objs);
     }
 
     /**
@@ -222,19 +235,19 @@ public class Server {
                         //System.out.print("\n");
 
                         if (msg[0].equals("MSG")) {
-                            log("datapackage from " + socket.getInetAddress().toString() + ": " + msg[0] + " with " + msg[2]);
+                            logf("Message from %s (%s): %s", msg[1], socket.getInetAddress().toString(), msg[2]);
                             sendToAllClients(msg);
 
                         } else if (msg[0].equals("CMD")) {
                             if (msg[2].equals("REG")) {
                                 //Check if nickname is already assigned to anyone
                                 if (clientnames.containsValue(msg[1])) {
-                                    log("Client " + socket.getInetAddress().toString() + " tried to register as " + msg[1] + " but the nickname is already assigned");
+                                    logf("Client %s tried to register as %s but the nickname is already assigned", socket.getInetAddress().toString(), msg[1]);
                                     sendToClient(socket, new String[]{"CMD", "", "NICK"});
                                     return;
                                 }
                                 if (clientcount >= maxclients) {
-                                    log("Client " + socket.getInetAddress().toString() + " tried to join but the room is full");
+                                    logf("Client %s (%s) tried to join but the room is full", msg[1], socket.getInetAddress().toString());
                                     sendToClient(socket, new String[]{"CMD", "", "FULL"});
                                 } else {
                                     clientcount++;
@@ -244,7 +257,7 @@ public class Server {
                                     if (!motd.isEmpty()) {
                                         sendToClient(socket, new String[]{"MSG", "", motd});
                                     }
-                                    log("Client " + socket.getInetAddress().toString() + " registered as " + msg[1]);
+                                    logf("Client %s registered as %s", socket.getInetAddress().toString(), msg[1]);
                                     sendToAllClients(new String[]{"MSG", "", msg[1] + " joined the chat room!"});
 
                                     //Send Mod login request to client
@@ -252,30 +265,30 @@ public class Server {
                                 }
                             } else if (msg[2].equals("REGMOD")) {
                                 if (!clientnames.containsValue(msg[1])) {
-                                    log("Client " + socket.getInetAddress().toString() + " tried to login as a mod before logging normally before");
+                                    logf("Client %s (%s) tried to login as a mod before logging in normally before", msg[1], socket.getInetAddress().toString());
                                     sendToClient(socket, new String[]{"CMD", "", "NOTREG"});
                                 } else {
                                     if (isMod(msg[1])) {
                                         if (msg.length < 4) {
-                                            log("Client " + socket.getInetAddress().toString() + " tried to login as a mod but failed to send a password");
+                                            logf("Client %s (%s) tried to login as a mod but failed to send a password", msg[1], socket.getInetAddress().toString());
                                             sendToClient(socket, new String[]{"CMD", "", "NOPASSWD"});
                                         } else {
                                             if (!loggedinmods.containsKey(msg[1])) {
                                                 if (modpasswords.get(msg[1]).equals(hashPassword(msg[3]))) {
-                                                    log("Client " + socket.getInetAddress().toString() + " logged in as a mod!");
+                                                    logf("Client %s (%s) logged in as a mod", msg[1], socket.getInetAddress().toString());
                                                     loggedinmods.put(msg[1], true);
                                                     sendToClient(socket, new String[]{"CMD", "", "REGSUCCESS"});
                                                 } else {
-                                                    log("Client " + socket.getInetAddress().toString() + " tried to login as a mod but has a wrong password!");
+                                                    logf("Client %s (%s) tried to login as a mod but has a wrong password!", msg[1], socket.getInetAddress().toString());
                                                     sendToClient(socket, new String[]{"CMD", "", "WRONGPASSWD"});
                                                 }
                                             } else {
-                                                log("Client " + socket.getInetAddress().toString() + " tried to login as a mod even though he is already logged in");
+                                                logf("Client %s (%s) tried to login as a mod even though he already is logged in", msg[1], socket.getInetAddress());
                                                 sendToClient(socket, new String[]{"CMD", "", "ALREADYLOGGED"});
                                             }
                                         }
                                     } else {
-                                        log("Client " + socket.getInetAddress().toString() + " tried to login as a mod even though he is no mod");
+                                        logf("Client %s (%s) tried to login as a mod even though he is no mod", msg[1], socket.getInetAddress().toString());
                                         sendToClient(socket, new String[]{"CMD", "", "NOMOD"});
                                     }
                                 }
@@ -285,7 +298,7 @@ public class Server {
                     }
                 } catch (IOException e) {
                     if (clients.contains(socket)) {
-                        log("Client " + socket.getInetAddress().toString() + " aka " + clientnames.get(socket) + " disconnected!");
+                        logf("Client %s (%s) disconnected!", clientnames.get(socket), socket.getInetAddress().toString());
                         sendToAllClients(new String[]{"MSG", "", clientnames.get(socket) + " left the chat room"});
 
                         if (isMod(clientnames.get(socket))) {
@@ -334,7 +347,7 @@ public class Server {
                                     clientnames.remove(s);
                                     try {
                                         s.close();
-                                        System.out.println("Kicked client " + name);
+                                        System.out.printf("Kicked client %s", name);
                                         break;
                                     } catch (IOException ignored) {
 
@@ -342,15 +355,15 @@ public class Server {
                                 }
                             }
                             if (!kicked) {
-                                System.out.println("Client " + name + " not found!");
+                                System.out.printf("Client %s not found!", name);
                             }
                         }
                         break;
                     case "online":
                         if (clientcount == 1)
-                            System.out.println("There is currently 1 client out of " + maxclients + " connected\nThe following client is connected");
+                            System.out.printf("There is currently 1 client out of %d connected\nThe following client is connected", maxclients);
                         else
-                            System.out.println("There are currently " + clientcount + " clients out of " + maxclients + " connected\nThe following clients are connected");
+                            System.out.printf("There are currently %d clients out of %d connected\nThe following clients are connected", clientcount, maxclients);
 
                         for (Socket s : clients) {
                             System.out.print(clientnames.get(s) + " ");
@@ -366,11 +379,11 @@ public class Server {
                             for (Socket s : clients) {
                                 if (clientnames.get(s).equals(name)) {
                                     if (isMod(clientnames.get(s))) {
-                                        System.out.println(name + " is already a mod!");
+                                        System.out.printf("%s is already a mod!", name);
                                         break;
                                     } else {
                                         modded = true;
-                                        System.out.println(name + " is now a mod!");
+                                        System.out.printf("%s is now a mod!", name);
                                         String password = generatePassword();
                                         System.out.println(password);
                                         System.out.println(hashPassword(password));
@@ -382,7 +395,7 @@ public class Server {
                                 }
                             }
                             if (!modded) {
-                                System.out.println(name + " not found!");
+                                System.out.printf("%s not found!", name);
                             }
                         }
                         break;
@@ -396,14 +409,14 @@ public class Server {
                             for (Socket s : clients) {
                                 if (clientnames.get(s).equals(name)) {
                                     if (!isMod(clientnames.get(s))) {
-                                        System.out.println(name + " is no mod!");
+                                        System.out.printf("%s is no mod!", name);
                                         userfound = true;
                                     } else {
                                         mods.remove(name);
                                         modpasswords.remove(name);
                                         loggedinmods.remove(name);
                                         sendToClient(s, new String[]{"CMD", "", "MODR"});
-                                        System.out.println(name + " is no longer a mod!");
+                                        System.out.printf("%s is no longer a mod!", name);
                                         userfound = true;
                                     }
                                 }
@@ -413,11 +426,11 @@ public class Server {
                                 mods.remove(name);
                                 modpasswords.remove(name);
                                 loggedinmods.remove(name);
-                                System.out.println(name + " is no longer a mod!");
+                                System.out.printf("%s is no longer a mod!", name);
                                 userfound = true;
                             }
 
-                            if (!userfound) System.out.println("User " + name + " not found!");
+                            if (!userfound) System.out.printf("User %s not found!", name);
                         }
                         break;
                     case "quit":
@@ -457,7 +470,7 @@ public class Server {
                             }
 
                             motd = newmotd.toString();
-                            System.out.println("Successfully set motd to \"" + newmotd.toString() + "\"!");
+                            System.out.printf("Successfully set motd to \"%s\"!", newmotd.toString());
                         }
                         break;
                     case "setclientlimit":
@@ -479,11 +492,11 @@ public class Server {
                                 System.out.println("Warning: The max player count is over the limit!");
                             }
                             maxclients = newcount;
-                            System.out.println("Successfully changed the client limit to " + newcount + "!");
+                            System.out.printf("Successfully changed the client limit to %d!", newcount);
                         }
                         break;
                     case "getclientlimit":
-                        System.out.println("The client limit is set to " + maxclients + " clients");
+                        System.out.printf("The client limit is set to %d clients", maxclients);
                         break;
                     case "getmodlist":
                         if (mods.size() == 0) {
@@ -498,8 +511,8 @@ public class Server {
                         if (cmds.length <= 1) {
                             System.out.println("Whom do you want to check?");
                         } else {
-                            if (isMod(cmds[1])) System.out.println(cmds[1] + " is a mod");
-                            else System.out.println(cmds[1] + " is not a mod");
+                            if (isMod(cmds[1])) System.out.printf("%s is a mod", cmds[1]);
+                            else System.out.printf("%s is not a mod", cmds[1]);
                         }
                         break;
                     case "ban":
@@ -511,7 +524,7 @@ public class Server {
                     case "getmodpasswords":
                         if (modpasswords.isEmpty()) System.out.println("No Modpasswords saved!");
                         for (String key : modpasswords.keySet()) {
-                            System.out.println(key + " -> " + modpasswords.get(key));
+                            System.out.printf("%s -> %s", key, modpasswords.get(key));
                         }
                         break;
                     case "help":
