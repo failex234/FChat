@@ -155,14 +155,18 @@ public class Client {
                                     MainGUI.disconnect();
                                     Thread.currentThread().interrupt();
                                     return;
-                                } else if (msg[2].equals("KICK") && MainGUI.connected) {
+                                } else if (msg[2].equals("KICK") && MainGUI.connected || msg[2].equals("BAN") && MainGUI.connected) {
                                     MainGUI.connected = false;
                                     c.tb_nickname.setDisable(false);
                                     c.tb_host.setDisable(false);
                                     c.tb_port.setDisable(false);
                                     c.btn_connect.setDisable(false);
-                                    //Prevent Not an FX Application Thread error
-                                    Platform.runLater(() -> MainGUI.alert("Kicked", "Kicked by server", "You got kicked by the server", Alert.AlertType.INFORMATION));
+                                    if (msg[2].equals("KICK")) {
+                                        //Prevent Not an FX Application Thread error
+                                        Platform.runLater(() -> MainGUI.alert("Kicked", "Kicked by server", "You got kicked by the server", Alert.AlertType.INFORMATION));
+                                    } else {
+                                        Platform.runLater(() -> MainGUI.alert("Banned", "Banned", "You are banned from the server!", Alert.AlertType.ERROR));
+                                    }
                                     server.close();
                                     MainGUI.disconnect();
                                     Thread.currentThread().interrupt();
@@ -210,6 +214,17 @@ public class Client {
                                         a.showAndWait();
                                         sendMessage(1, "REGMOD", passwd);
                                     });
+                                } else if(msg[2].equals("NOTCONNECTED")) {
+                                    MainGUI.connected = false;
+                                    c.tb_nickname.setDisable(false);
+                                    c.tb_host.setDisable(false);
+                                    c.tb_port.setDisable(false);
+                                    c.btn_connect.setDisable(false);
+                                    Platform.runLater(() -> MainGUI.alert("Not registered!", "Not registered!", "You tried to send a message without being registered at the server!", Alert.AlertType.ERROR));
+                                    server.close();
+                                    MainGUI.disconnect();
+                                    Thread.currentThread().interrupt();
+                                    return;
                                 }
                                 break;
                         }

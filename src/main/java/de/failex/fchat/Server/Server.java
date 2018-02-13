@@ -26,6 +26,8 @@ public class Server {
     private ArrayList<Socket> clients = new ArrayList<>();
     private HashMap<Socket, String> clientnames = new HashMap<>();
 
+    private ArrayList<String> bannedclients = new ArrayList<>();
+
     private File config = new File("config.json");
     private ServerConfig cfg;
     private Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -53,6 +55,7 @@ public class Server {
                 mods = cfg.getMods();
                 maxclients = cfg.getMaxclients();
                 modpasswords = cfg.getModpasswords();
+                bannedclients = cfg.getBannedclients();
             } catch (IOException e) {
                 log("Error reading config");
                 e.printStackTrace();
@@ -159,6 +162,7 @@ public class Server {
 
     /**
      * Log to the console
+     *
      * @param msg the message to log
      */
     private void log(String msg) {
@@ -167,8 +171,9 @@ public class Server {
 
     /**
      * Log a formatted message to the console
+     *
      * @param format the format to print
-     * @param objs the objects to insert into the format
+     * @param objs   the objects to insert into the format
      */
     private void logf(String format, Object... objs) {
         System.out.printf("[LOG] " + format + "\n", objs);
@@ -235,6 +240,14 @@ public class Server {
                         //System.out.print("\n");
 
                         if (msg[0].equals("MSG")) {
+
+                            //Check if client is registered
+                            if (!clients.contains(socket)) {
+                                logf("%s (%s) tried to chat but is not registered!");
+                                sendToClient(socket, new String[]{"CMD", "", "NOTCONNECTED"});
+                                return;
+                            }
+
                             //Only send message when client didn't spam newlines
                             if (getCount(msg[2], '\n') < 2) {
                                 logf("Message from %s (%s): %s", msg[1], socket.getInetAddress().toString(), msg[2]);
@@ -243,6 +256,11 @@ public class Server {
 
                         } else if (msg[0].equals("CMD")) {
                             if (msg[2].equals("REG")) {
+                                //Check if user is banned
+                                if (bannedclients.contains(msg[1])) {
+                                    logf("%s tried to register but got kicked because he's banned!", msg[1]);
+                                    sendToClient(socket, new String[]{"CMD", "", "BAN"});
+                                }
                                 //Check if nickname is already assigned to anyone
                                 if (clientnames.containsValue(msg[1])) {
                                     logf("Client %s tried to register as %s but the nickname is already assigned", socket.getInetAddress().toString(), msg[1]);
@@ -444,6 +462,7 @@ public class Server {
                         cfg.setMods(mods);
                         cfg.setModpasswords(modpasswords);
                         cfg.setPasswordsize(passwordsize);
+                        cfg.setBannedclients(bannedclients);
 
                         String newjson = gson.toJson(cfg);
 
@@ -519,10 +538,48 @@ public class Server {
                         }
                         break;
                     case "ban":
-                        //Future command
+                        if (cmds.length <= 1) {
+                            System.out.println("Whom do you want to ban?");
+                        } else {
+                            String name = cmds[1];
+                            if (bannedclients.contains(name)) {
+                                System.out.printf("%s is already banned!\n", name);
+                            } else {
+                                if (isConnected(name)) {
+                                    for (Socket s : clients) {
+                                        if (clientnames.get(s).equals(name)) {
+                                            sendToClient(s, new String[]{"CMD", "", "BAN"});
+                                            clientcount--;
+                                            clients.remove(s);
+                                            clientnames.remove(s);
+                                            try {
+                                                s.close();
+                                                System.out.printf("Banned client %s\n", name);
+                                                bannedclients.add(name);
+                                            } catch (IOException ignored) {
+
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    bannedclients.add(name);
+                                    System.out.printf("Banned client %s\n", name);
+                                }
+                            }
+                        }
                         break;
                     case "unban":
-                        //Future command
+                        if (cmds.length <= 1) {
+                            System.out.println("Whom do you want to unban?");
+                        } else {
+                            String name = cmds[1];
+                            if (bannedclients.contains(name)) {
+                                bannedclients.remove(name);
+                                System.out.printf("%s is no longer banned!\n", name);
+                            } else {
+                                System.out.printf("%s is not banned!\n", name);
+                            }
+                        }
                         break;
                     case "getmodpasswords":
                         if (modpasswords.isEmpty()) System.out.println("No Modpasswords saved!");
@@ -539,6 +596,7 @@ public class Server {
                         System.out.println("addmod <nickname>");
                         System.out.println("removemod <nickname>");
                         System.out.println("ismod <nickname>");
+                        System.out.println("isbanned <nickname>");
                         System.out.println("getmodlist");
                         System.out.println("getmodpasswords");
                         System.out.println("quit / stop");
@@ -562,7 +620,7 @@ public class Server {
      * @param search the character to count
      * @return the number of occurrences of the character in the string
      */
-    public int getCount(String string, char search) {
+    private int getCount(String string, char search) {
         int count = 0;
         for (char c : string.toCharArray()) {
             if (c == search) count++;
@@ -570,4 +628,25 @@ public class Server {
 
         return count;
     }
+
+    /**
+     * Checks if a client is connected
+     *
+     * @param client the client to check
+     * @return true if client is connected otherwise false
+     */
+    private boolean isConnected(String client) {
+        return clientnames.containsValue(client);
+    }
+
+    /**
+     * Checks if a client is connected
+     *
+     * @param client the client to check
+     * @return true if client is connected otherwise false
+     */
+    private boolean isConnected(Socket client) {
+        return clients.contains(client);
+    }
+
 }
