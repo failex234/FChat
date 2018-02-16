@@ -1,6 +1,7 @@
 package de.failex.fchat.GUI;
 
 import de.failex.fchat.Client.Client;
+import javafx.collections.ObservableList;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
@@ -11,8 +12,10 @@ public class MainGUI {
     //TODO Let user choose username
     public static boolean connected = false;
     static Client cl;
+    static MainGUIController c;
 
     public MainGUI(MainGUIController c, Stage stage) {
+        this.c = c;
         //Set standard port
         c.tb_port.setText("1552");
         c.tb_host.setText("");
@@ -137,5 +140,11 @@ public class MainGUI {
         }
 
         return count;
+    }
+
+    public static void clearChat() {
+        ObservableList<String> oldlist = c.lv_msg.getItems();
+        oldlist.clear();
+        c.lv_msg.setItems(oldlist);
     }
 }

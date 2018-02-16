@@ -290,7 +290,7 @@ public class Server {
                                     sendToClient(socket, new String[]{"CMD", "", "NOTREG"});
                                 } else {
                                     if (isMod(msg[1])) {
-                                        if (msg.length < 4) {
+                                        if (msg.length < 4 || msg[3].isEmpty()) {
                                             logf("Client %s (%s) tried to login as a mod but failed to send a password", msg[1], socket.getInetAddress().toString());
                                             sendToClient(socket, new String[]{"CMD", "", "NOPASSWD"});
                                         } else {

@@ -139,6 +139,7 @@ public class Client {
                                     Platform.runLater(() -> {
                                         MainGUI.alert("Duplicate nickname", "Duplicate nickname", "Sorry but this nickname is already taken!", Alert.AlertType.ERROR);
                                     });
+                                    MainGUI.clearChat();
                                     Thread.currentThread().interrupt();
                                     return;
                                 } else if (msg[2].equals("FULL") && MainGUI.connected) {
@@ -151,6 +152,7 @@ public class Client {
                                     Platform.runLater(() -> {
                                         MainGUI.alert("Room full", "Romm full!", "Sorry but the chatroom is full", Alert.AlertType.ERROR);
                                     });
+                                    MainGUI.clearChat();
                                     server.close();
                                     MainGUI.disconnect();
                                     Thread.currentThread().interrupt();
@@ -167,6 +169,7 @@ public class Client {
                                     } else {
                                         Platform.runLater(() -> MainGUI.alert("Banned", "Banned", "You are banned from the server!", Alert.AlertType.ERROR));
                                     }
+                                    MainGUI.clearChat();
                                     server.close();
                                     MainGUI.disconnect();
                                     Thread.currentThread().interrupt();
@@ -183,6 +186,7 @@ public class Client {
                                     c.tb_port.setDisable(false);
                                     c.btn_connect.setDisable(false);
                                     Platform.runLater(() -> MainGUI.alert("Login failed", "Logged failed", "The Mod-login has failed due to a missing registration!", Alert.AlertType.ERROR));
+                                    MainGUI.clearChat();
                                     server.close();
                                     MainGUI.disconnect();
                                     Thread.currentThread().interrupt();
@@ -214,13 +218,14 @@ public class Client {
                                         a.showAndWait();
                                         sendMessage(1, "REGMOD", passwd);
                                     });
-                                } else if(msg[2].equals("NOTCONNECTED")) {
+                                } else if (msg[2].equals("NOTCONNECTED")) {
                                     MainGUI.connected = false;
                                     c.tb_nickname.setDisable(false);
                                     c.tb_host.setDisable(false);
                                     c.tb_port.setDisable(false);
                                     c.btn_connect.setDisable(false);
                                     Platform.runLater(() -> MainGUI.alert("Not registered!", "Not registered!", "You tried to send a message without being registered at the server!", Alert.AlertType.ERROR));
+                                    MainGUI.clearChat();
                                     server.close();
                                     MainGUI.disconnect();
                                     Thread.currentThread().interrupt();
@@ -229,6 +234,17 @@ public class Client {
                                 break;
                         }
                     }
+                } catch (SocketException ef) {
+                    MainGUI.connected = false;
+                    c.tb_nickname.setDisable(false);
+                    c.tb_host.setDisable(false);
+                    c.tb_port.setDisable(false);
+                    c.btn_connect.setDisable(false);
+                    Platform.runLater(() -> MainGUI.alert("Connection lost", "Connection lost!", "Connection to the server lost! Logging out...", Alert.AlertType.INFORMATION));
+                    MainGUI.disconnect();
+                    MainGUI.clearChat();
+                    Thread.currentThread().interrupt();
+                    return;
                 } catch (Exception e) {
                     printException(e);
                 }
