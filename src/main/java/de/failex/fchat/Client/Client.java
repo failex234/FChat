@@ -148,6 +148,7 @@ public class Client {
                                     c.tb_host.setDisable(false);
                                     c.tb_port.setDisable(false);
                                     c.btn_connect.setDisable(false);
+                                    
                                     //Prevent Not an FX Application Thread error
                                     Platform.runLater(() -> {
                                         MainGUI.alert("Room full", "Romm full!", "Sorry but the chatroom is full", Alert.AlertType.ERROR);
@@ -163,6 +164,13 @@ public class Client {
                                     c.tb_host.setDisable(false);
                                     c.tb_port.setDisable(false);
                                     c.btn_connect.setDisable(false);
+
+                                    //Disable mod tools
+                                    c.btn_broadcast.setDisable(true);
+                                    c.btn_clear.setDisable(true);
+                                    c.btn_ban.setDisable(true);
+                                    c.btn_kick.setDisable(true);
+
                                     if (msg[2].equals("KICK")) {
                                         //Prevent Not an FX Application Thread error
                                         Platform.runLater(() -> MainGUI.alert("Kicked", "Kicked by server", "You got kicked by the server", Alert.AlertType.INFORMATION));
@@ -195,7 +203,6 @@ public class Client {
                                     Platform.runLater(() -> MainGUI.alert("Missing password", "Missing password", "You failed to enter a password", Alert.AlertType.ERROR));
                                 } else if (msg[2].equals("REGSUCCESS")) {
                                     Platform.runLater(() -> MainGUI.alert("Login successful", "Success!", "You have successfully logged in as a mod", Alert.AlertType.INFORMATION));
-
                                     c.btn_broadcast.setDisable(false);
                                     c.btn_clear.setDisable(false);
                                     c.btn_ban.setDisable(false);
@@ -226,6 +233,13 @@ public class Client {
                                     c.btn_connect.setDisable(false);
                                     Platform.runLater(() -> MainGUI.alert("Not registered!", "Not registered!", "You tried to send a message without being registered at the server!", Alert.AlertType.ERROR));
                                     MainGUI.clearChat();
+
+                                    //Disable mod tools
+                                    c.btn_broadcast.setDisable(true);
+                                    c.btn_clear.setDisable(true);
+                                    c.btn_ban.setDisable(true);
+                                    c.btn_kick.setDisable(true);
+
                                     server.close();
                                     MainGUI.disconnect();
                                     Thread.currentThread().interrupt();
@@ -240,6 +254,13 @@ public class Client {
                     c.tb_host.setDisable(false);
                     c.tb_port.setDisable(false);
                     c.btn_connect.setDisable(false);
+
+                    //Disable mod tools
+                    c.btn_broadcast.setDisable(true);
+                    c.btn_clear.setDisable(true);
+                    c.btn_ban.setDisable(true);
+                    c.btn_kick.setDisable(true);
+
                     Platform.runLater(() -> MainGUI.alert("Connection lost", "Connection lost!", "Connection to the server lost! Logging out...", Alert.AlertType.INFORMATION));
                     MainGUI.disconnect();
                     MainGUI.clearChat();
