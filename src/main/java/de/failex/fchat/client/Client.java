@@ -148,7 +148,7 @@ public class Client {
                                     c.tb_host.setDisable(false);
                                     c.tb_port.setDisable(false);
                                     c.btn_connect.setDisable(false);
-                                    
+
                                     //Prevent Not an FX Application Thread error
                                     Platform.runLater(() -> {
                                         MainGUI.alert("Room full", "Romm full!", "Sorry but the chatroom is full", Alert.AlertType.ERROR);

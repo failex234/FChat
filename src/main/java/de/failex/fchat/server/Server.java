@@ -243,10 +243,73 @@ public class Server {
 
                             //Check if client is registered
                             if (!clients.contains(socket)) {
-                                logf("%s (%s) tried to chat but is not registered!");
+                                logf("%s (%s) tried to chat but is not registered!", "nonick", socket.getInetAddress().toString());
                                 sendToClient(socket, new String[]{"CMD", "", "NOTCONNECTED"});
                                 return;
                             }
+                            if (msg[2].startsWith("/")) {
+                                String[] cmd = msg[2].split(" ");
+
+                                logf("%s (%s) executed command %s", clientnames.get(socket), socket.getInetAddress().toString(), cmd[0]);
+                                //Client commands
+                                switch (cmd[0]) {
+                                    case "/help":
+                                        //Send help menu based on if client is mod
+                                        break;
+                                    case "/ban":
+                                        if (cmd.length < 2) {
+                                            sendToClient(socket, new String[]{"MSG", "", "You forgot an argument!"});
+                                            break;
+                                        }
+                                        //Check if mod
+                                        break;
+                                    case "/kick":
+                                        if (cmd.length < 2) {
+                                            sendToClient(socket, new String[]{"MSG", "", "You forgot an argument!"});
+                                            break;
+                                        }
+                                        //Check if mod
+                                        break;
+                                    case "/addmod":
+                                        if (cmd.length < 2) {
+                                            sendToClient(socket, new String[]{"MSG", "", "You forgot an argument!"});
+                                            break;
+                                        }
+                                        //Check if mod
+                                        break;
+                                    case "/online":
+                                        sendToClient(socket, new String[]{"MSG", "", "There are currently " + clientcount + " clients out of " + maxclients + " client connected!"});
+                                        break;
+                                    case "/msg":
+                                        if (cmd.length < 2) {
+                                            sendToClient(socket, new String[]{"MSG", "", "You forgot an argument!"});
+                                            break;
+                                        }
+
+                                        Socket receiver = getSocket(cmd[1]);
+                                        if (receiver == null) {
+                                            sendToClient(socket, new String[]{"MSG", "", "Player not found"});
+                                            break;
+                                        }
+                                        //Missing message
+                                        if (cmd.length < 3) {
+                                            sendToClient(socket, new String[]{"MSG", "", "You are missing a message"});
+                                            break;
+                                        }
+
+                                        String endstring = "";
+                                        for (int i = 2; i < cmd.length; i++) {
+                                            endstring += " ";
+                                        }
+
+                                        sendToClient(receiver, new String[]{"MSG", "", "Message from " + clientnames.get(socket) + ": " + endstring});
+                                        sendToClient(socket, new String[]{"MSG", "", "Sent message to " + cmd[1]});
+                                        break;
+                                    default:
+                                        sendToClient(socket, new String[]{"MSG", "", "Command not found!"});
+                                        break;
+                                }
+                            } else
 
                             //Only send message when client didn't spam newlines
                             if (getCount(msg[2], '\n') < 2) {
@@ -506,7 +569,7 @@ public class Server {
                                 System.out.println("This is not a number!");
                                 break;
                             }
-                            if (clientcount < 1) {
+                            if (newcount < 1) {
                                 System.out.println("Error: This number is too low!");
                                 break;
                             }
@@ -647,6 +710,20 @@ public class Server {
      */
     private boolean isConnected(Socket client) {
         return clients.contains(client);
+    }
+
+    /**
+     * Search for an online client
+     *
+     * @param name The name of the online client
+     * @return socket of the client if client is online otherwise null
+     */
+    private Socket getSocket(String name) {
+        for (Socket s : clientnames.keySet()) {
+            if (clientnames.get(s).equals(name)) return s;
+        }
+
+        return null;
     }
 
 }
