@@ -1,4 +1,4 @@
-package de.failex.fchat.Server;
+package de.failex.fchat.server;
 
 import java.util.ArrayList;
 import java.util.HashMap;

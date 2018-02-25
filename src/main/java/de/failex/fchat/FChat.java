@@ -1,8 +1,8 @@
 package de.failex.fchat;
 
-import de.failex.fchat.GUI.MainGUI;
-import de.failex.fchat.GUI.MainGUIController;
-import de.failex.fchat.Server.Server;
+import de.failex.fchat.gui.MainGUI;
+import de.failex.fchat.gui.MainGUIController;
+import de.failex.fchat.server.Server;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;

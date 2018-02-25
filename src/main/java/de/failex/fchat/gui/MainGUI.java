@@ -1,6 +1,6 @@
-package de.failex.fchat.GUI;
+package de.failex.fchat.gui;
 
-import de.failex.fchat.Client.Client;
+import de.failex.fchat.client.Client;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Label;

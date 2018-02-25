@@ -1,4 +1,4 @@
-package de.failex.fchat.Server;
+package de.failex.fchat.server;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

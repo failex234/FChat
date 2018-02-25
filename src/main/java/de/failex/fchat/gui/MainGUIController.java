@@ -1,4 +1,4 @@
-package de.failex.fchat.GUI;
+package de.failex.fchat.gui;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
