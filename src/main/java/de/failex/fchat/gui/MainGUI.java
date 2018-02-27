@@ -27,6 +27,7 @@ public class MainGUI {
         c.btn_ban.setDisable(true);
         c.btn_clear.setDisable(true);
         c.btn_broadcast.setDisable(true);
+        c.btn_msg.setDisable(true);
 
         c.title.setVisible(false);
 
@@ -92,6 +93,13 @@ public class MainGUI {
             } else {
                 alert("Not connected", "Not connected", "You're not connected to a server!", Alert.AlertType.INFORMATION);
             }
+        });
+
+        c.btn_msg.setOnMouseClicked(event -> {
+            String name = (String) c.lv_clients.getSelectionModel().getSelectedItem();
+            cl.sendMessage(0,"/msg " + name + " " + c.tb_msg.getText());
+            c.tb_msg.setText("");
+
         });
     }
 

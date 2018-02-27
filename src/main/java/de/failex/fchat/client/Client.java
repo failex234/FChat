@@ -3,6 +3,7 @@ package de.failex.fchat.client;
 import de.failex.fchat.gui.MainGUI;
 import de.failex.fchat.gui.MainGUIController;
 import javafx.application.Platform;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Alert;
 import javafx.scene.control.TextField;
@@ -10,6 +11,9 @@ import org.apache.commons.lang3.ArrayUtils;
 
 import java.io.*;
 import java.net.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class Client {
 
@@ -36,6 +40,8 @@ public class Client {
             c.tb_host.setDisable(true);
             c.tb_port.setDisable(true);
             c.tb_nickname.setDisable(true);
+
+            c.btn_msg.setDisable(false);
 
             this.nickname = c.tb_nickname.getText();
 
@@ -133,6 +139,7 @@ public class Client {
                                     c.tb_host.setDisable(false);
                                     c.tb_port.setDisable(false);
                                     c.btn_connect.setDisable(false);
+                                    c.btn_msg.setDisable(true);
                                     server.close();
                                     MainGUI.disconnect();
                                     //Prevent Not an FX Application Thread error
@@ -148,6 +155,7 @@ public class Client {
                                     c.tb_host.setDisable(false);
                                     c.tb_port.setDisable(false);
                                     c.btn_connect.setDisable(false);
+                                    c.btn_msg.setDisable(true);
 
                                     //Prevent Not an FX Application Thread error
                                     Platform.runLater(() -> {
@@ -165,11 +173,13 @@ public class Client {
                                     c.tb_port.setDisable(false);
                                     c.btn_connect.setDisable(false);
 
+
                                     //Disable mod tools
                                     c.btn_broadcast.setDisable(true);
                                     c.btn_clear.setDisable(true);
                                     c.btn_ban.setDisable(true);
                                     c.btn_kick.setDisable(true);
+                                    c.btn_msg.setDisable(true);
 
                                     if (msg[2].equals("KICK")) {
                                         //Prevent Not an FX Application Thread error
@@ -193,6 +203,7 @@ public class Client {
                                     c.tb_host.setDisable(false);
                                     c.tb_port.setDisable(false);
                                     c.btn_connect.setDisable(false);
+                                    c.btn_msg.setDisable(true);
                                     Platform.runLater(() -> MainGUI.alert("Login failed", "Logged failed", "The Mod-login has failed due to a missing registration!", Alert.AlertType.ERROR));
                                     MainGUI.clearChat();
                                     server.close();
@@ -207,6 +218,7 @@ public class Client {
                                     c.btn_clear.setDisable(false);
                                     c.btn_ban.setDisable(false);
                                     c.btn_kick.setDisable(false);
+                                    c.btn_msg.setDisable(false);
                                 } else if (msg[2].equals("WRONGPASSWD")) {
                                     Platform.runLater(() -> MainGUI.alert("Wrong password", "Incorrect password", "The password you have entered is wrong!", Alert.AlertType.ERROR));
                                 } else if (msg[2].equals("ALREADYLOGGED")) {
@@ -239,11 +251,22 @@ public class Client {
                                     c.btn_clear.setDisable(true);
                                     c.btn_ban.setDisable(true);
                                     c.btn_kick.setDisable(true);
+                                    c.btn_msg.setDisable(true);
 
                                     server.close();
                                     MainGUI.disconnect();
                                     Thread.currentThread().interrupt();
                                     return;
+                                } else if (msg[2].equals("LIST")) {
+                                    //TODO: Remove first three elements
+                                    String[] clientsarray = new String[msg.length - 3];
+                                    int clientarrayindex = 0;
+                                    for (int i = 3; i < msg.length; i++) {
+                                        clientsarray[clientarrayindex] = msg[i];
+                                        clientarrayindex++;
+                                    }
+                                    List<String> clients = Arrays.asList(clientsarray);
+                                    c.lv_clients.setItems(FXCollections.observableArrayList(clients));
                                 }
                                 break;
                         }

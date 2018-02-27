@@ -2,14 +2,13 @@ package de.failex.fchat.server;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.apache.commons.lang3.ArrayUtils;
 
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.MessageDigest;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Random;
+import java.util.*;
 
 public class Server {
 
@@ -88,6 +87,7 @@ public class Server {
         this.serverthread.start();
     }
 
+    //TODO: Remove user from mod arrarylist on disconnect
 
     /**
      * Sends a package (String Array) to all connected sockets
@@ -259,6 +259,15 @@ public class Server {
                                 switch (cmd[0]) {
                                     case "/help":
                                         //Send help menu based on if client is mod
+                                        sendToClient(socket, new String[]{"MSG", "", "Available commands"});
+                                        sendToClient(socket, new String[]{"MSG", "", "/msg <name> - Send a private message to <name>"});
+                                        sendToClient(socket, new String[]{"MSG", "", "/online - See who's online"});
+                                        if (isMod(socket)) {
+                                            sendToClient(socket, new String[]{"MSG", "", "/ban <name> - Ban <name>"});
+                                            sendToClient(socket, new String[]{"MSG", "", "/kick <name> - Kick <name>"});
+                                            sendToClient(socket, new String[]{"MSG", "", "/addmod <name> - Add <name> as a mod"});
+                                        }
+                                        sendToClient(socket, new String[]{"MSG", "", "/help - Show this menu"});
                                         break;
                                     case "/ban":
                                         if (!isMod(socket)) {
@@ -309,6 +318,7 @@ public class Server {
                                         if (isMod(cmd[1])) {
                                             sendToClient(socket, new String[]{"MSG", "", cmd[1], " is already a mod!"});
                                         } else {
+                                            //TODO
                                             sendToClient(socket, new String[]{"MSG", "", "added " + cmd[1] + " as a mod"});
                                         }
                                         break;
@@ -323,7 +333,7 @@ public class Server {
 
                                         Socket receiver = getSocket(cmd[1]);
                                         if (receiver == null) {
-                                            sendToClient(socket, new String[]{"MSG", "", "Player not found"});
+                                            sendToClient(socket, new String[]{"MSG", "", "Client not found"});
                                             break;
                                         }
                                         //Missing message
@@ -379,6 +389,10 @@ public class Server {
                                     logf("Client %s registered as %s", socket.getInetAddress().toString(), msg[1]);
                                     sendToAllClients(new String[]{"MSG", "", msg[1] + " joined the chat room!"});
 
+                                    //Send new clientlist to all players
+                                    String[] clientlist = Arrays.copyOf(clientnames.values().toArray(), clientnames.values().toArray().length, String[].class);
+                                    sendToAllClients(ArrayUtils.addAll(new String[]{"CMD", "", "LIST"}, clientlist));
+
                                     //Send Mod login request to client
                                     if (mods.contains(msg[1])) sendToClient(socket, new String[]{"CMD", "", "MODL"});
                                 }
@@ -411,6 +425,9 @@ public class Server {
                                         sendToClient(socket, new String[]{"CMD", "", "NOMOD"});
                                     }
                                 }
+                            } else if(msg[2].equals("LIST")) {
+                                String[] clients = Arrays.copyOf(clientnames.values().toArray(), clientnames.values().toArray().length, String[].class);
+                                sendToClient(socket, ArrayUtils.addAll(new String[]{"CMD", "", "LIST"}, clients));
                             }
 
                         }
@@ -426,6 +443,10 @@ public class Server {
                         clients.remove(socket);
                         clientnames.remove(socket);
                         clientcount--;
+
+                        //Send new clientlist to all players
+                        String[] clientlist = Arrays.copyOf(clientnames.values().toArray(), clientnames.values().toArray().length, String[].class);
+                        sendToAllClients(ArrayUtils.addAll(new String[]{"CMD", "", "LIST"}, clientlist));
 
                     }
                     return;
