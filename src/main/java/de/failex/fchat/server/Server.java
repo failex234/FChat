@@ -141,6 +141,10 @@ public class Server {
         return mods.contains(s);
     }
 
+    public boolean isMod(Socket s) {
+        return isMod(clientnames.get(s));
+    }
+
     public String hashPassword(String password) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-512");
@@ -257,25 +261,56 @@ public class Server {
                                         //Send help menu based on if client is mod
                                         break;
                                     case "/ban":
+                                        if (!isMod(socket)) {
+                                            sendToClient(socket, new String[]{"MSG", "", "You're not a mod!"});
+                                            break;
+                                        }
+
                                         if (cmd.length < 2) {
                                             sendToClient(socket, new String[]{"MSG", "", "You forgot an argument!"});
                                             break;
                                         }
-                                        //Check if mod
+
+                                        if (banClient(cmd[1], false)) {
+                                            sendToClient(socket, new String[]{"MSG", "", "Banned client " + cmd[1]});
+                                        } else {
+                                            sendToClient(socket, new String[]{"MSG", "", "Can't ban " + cmd[1]});
+                                        }
                                         break;
                                     case "/kick":
+                                        if (!isMod(socket)) {
+                                            sendToClient(socket, new String[]{"MSG", "", "You're not a mod!"});
+                                            break;
+                                        }
+
                                         if (cmd.length < 2) {
                                             sendToClient(socket, new String[]{"MSG", "", "You forgot an argument!"});
                                             break;
                                         }
-                                        //Check if mod
+
+                                        if (kickClient(cmd[1], false)) {
+                                            sendToClient(socket, new String[]{"MSG", "", "Kicked " + cmd[1]});
+                                        } else {
+                                            sendToClient(socket, new String[]{"MSG", "", "Can't kick " + cmd[1]});
+                                        }
                                         break;
                                     case "/addmod":
+                                        //Check if mod
+                                        if (!isMod(socket)) {
+                                            sendToClient(socket, new String[]{"MSG", "", "You're not a mod!"});
+                                            break;
+                                        }
+
                                         if (cmd.length < 2) {
                                             sendToClient(socket, new String[]{"MSG", "", "You forgot an argument!"});
                                             break;
                                         }
-                                        //Check if mod
+
+                                        if (isMod(cmd[1])) {
+                                            sendToClient(socket, new String[]{"MSG", "", cmd[1], " is already a mod!"});
+                                        } else {
+                                            sendToClient(socket, new String[]{"MSG", "", "added " + cmd[1] + " as a mod"});
+                                        }
                                         break;
                                     case "/online":
                                         sendToClient(socket, new String[]{"MSG", "", "There are currently " + clientcount + " clients out of " + maxclients + " client connected!"});
@@ -299,7 +334,7 @@ public class Server {
 
                                         String endstring = "";
                                         for (int i = 2; i < cmd.length; i++) {
-                                            endstring += " ";
+                                            endstring += cmd[i] + " ";
                                         }
 
                                         sendToClient(receiver, new String[]{"MSG", "", "Message from " + clientnames.get(socket) + ": " + endstring});
@@ -311,11 +346,11 @@ public class Server {
                                 }
                             } else
 
-                            //Only send message when client didn't spam newlines
-                            if (getCount(msg[2], '\n') < 2) {
-                                logf("Message from %s (%s): %s", msg[1], socket.getInetAddress().toString(), msg[2]);
-                                sendToAllClients(msg);
-                            }
+                                //Only send message when client didn't spam newlines
+                                if (getCount(msg[2], '\n') < 2) {
+                                    logf("Message from %s (%s): %s", msg[1], socket.getInetAddress().toString(), msg[2]);
+                                    sendToAllClients(msg);
+                                }
 
                         } else if (msg[0].equals("CMD")) {
                             if (msg[2].equals("REG")) {
@@ -420,27 +455,7 @@ public class Server {
                         if (cmds.length <= 1) {
                             System.out.println("Whom do you want to kick?");
                         } else {
-                            String name = cmds[1];
-                            boolean kicked = false;
-                            for (Socket s : clients) {
-                                if (clientnames.get(s).equals(name)) {
-                                    kicked = true;
-                                    sendToClient(s, new String[]{"CMD", "", "KICK"});
-                                    clientcount--;
-                                    clients.remove(s);
-                                    clientnames.remove(s);
-                                    try {
-                                        s.close();
-                                        System.out.printf("Kicked client %s\n", name);
-                                        break;
-                                    } catch (IOException ignored) {
-
-                                    }
-                                }
-                            }
-                            if (!kicked) {
-                                System.out.printf("Client %s not found!\n", name);
-                            }
+                            kickClient(cmds[1], true);
                         }
                         break;
                     case "online":
@@ -604,31 +619,7 @@ public class Server {
                         if (cmds.length <= 1) {
                             System.out.println("Whom do you want to ban?");
                         } else {
-                            String name = cmds[1];
-                            if (bannedclients.contains(name)) {
-                                System.out.printf("%s is already banned!\n", name);
-                            } else {
-                                if (isConnected(name)) {
-                                    for (Socket s : clients) {
-                                        if (clientnames.get(s).equals(name)) {
-                                            sendToClient(s, new String[]{"CMD", "", "BAN"});
-                                            clientcount--;
-                                            clients.remove(s);
-                                            clientnames.remove(s);
-                                            try {
-                                                s.close();
-                                                System.out.printf("Banned client %s\n", name);
-                                                bannedclients.add(name);
-                                            } catch (IOException ignored) {
-
-                                            }
-                                        }
-                                    }
-                                } else {
-                                    bannedclients.add(name);
-                                    System.out.printf("Banned client %s\n", name);
-                                }
-                            }
+                            banClient(cmds[1], true);
                         }
                         break;
                     case "unban":
@@ -724,6 +715,74 @@ public class Server {
         }
 
         return null;
+    }
+
+    /**
+     * Ban a client
+     *
+     * @param name The client to ban
+     * @param log  Log to console or not
+     */
+    private boolean banClient(String name, boolean log) {
+        if (bannedclients.contains(name)) {
+            System.out.printf("%s is already banned!\n", name);
+            return false;
+        } else {
+            if (isConnected(name)) {
+                for (Socket s : clients) {
+                    if (clientnames.get(s).equals(name)) {
+                        sendToClient(s, new String[]{"CMD", "", "BAN"});
+                        clientcount--;
+                        clients.remove(s);
+                        clientnames.remove(s);
+                        try {
+                            s.close();
+                            if (log) System.out.printf("Banned client %s\n", name);
+                            bannedclients.add(name);
+                            return true;
+                        } catch (IOException ignored) {
+                            return false;
+                        }
+                    }
+                }
+            } else {
+                bannedclients.add(name);
+                if (log) System.out.printf("Banned client %s\n", name);
+                return true;
+            }
+            return false;
+        }
+    }
+
+    /**
+     * Kicks a client
+     *
+     * @param name The client to kick
+     * @param log  Log to console or not
+     */
+    private boolean kickClient(String name, boolean log) {
+        boolean kicked = false;
+        for (Socket s : clients) {
+            if (clientnames.get(s).equals(name)) {
+                kicked = true;
+                sendToClient(s, new String[]{"CMD", "", "KICK"});
+                clientcount--;
+                clients.remove(s);
+                clientnames.remove(s);
+                try {
+                    s.close();
+                    if (log) System.out.printf("Kicked client %s\n", name);
+                    return true;
+                } catch (IOException ignored) {
+
+                }
+            }
+        }
+        if (!kicked) {
+            if (log) System.out.printf("Client %s not found!\n", name);
+            return false;
+        }
+        return false;
     }
 
 }
