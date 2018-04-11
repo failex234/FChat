@@ -97,8 +97,10 @@ public class MainGUI {
 
         c.btn_msg.setOnMouseClicked(event -> {
             String name = (String) c.lv_clients.getSelectionModel().getSelectedItem();
-            cl.sendMessage(0,"/msg " + name + " " + c.tb_msg.getText());
-            c.tb_msg.setText("");
+            if (!name.isEmpty()) {
+                cl.sendMessage(0, "/msg " + name + " " + c.tb_msg.getText());
+                c.tb_msg.setText("");
+            }
 
         });
     }
@@ -154,5 +156,11 @@ public class MainGUI {
         ObservableList<String> oldlist = c.lv_msg.getItems();
         oldlist.clear();
         c.lv_msg.setItems(oldlist);
+    }
+
+    public static void clearClientList() {
+        ObservableList<String> oldlist = c.lv_clients.getItems();
+        oldlist.clear();
+        c.lv_clients.setItems(oldlist);
     }
 }

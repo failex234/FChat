@@ -247,7 +247,7 @@ public class Server {
 
                             //Check if client is registered
                             if (!clients.contains(socket)) {
-                                logf("%s (%s) tried to chat but is not registered!", "nonick", socket.getInetAddress().toString());
+                                logf("%s (%s) tried to chat but is not registered.", "nonick", socket.getInetAddress().toString());
                                 sendToClient(socket, new String[]{"CMD", "", "NOTCONNECTED"});
                                 return;
                             }
@@ -262,7 +262,7 @@ public class Server {
                                         sendToClient(socket, new String[]{"MSG", "", "Available commands"});
                                         sendToClient(socket, new String[]{"MSG", "", "/msg <name> - Send a private message to <name>"});
                                         sendToClient(socket, new String[]{"MSG", "", "/online - See who's online"});
-                                        if (isMod(socket)) {
+                                        if (isMod(socket) && loggedinmods.containsKey(clientnames.get(socket)) && loggedinmods.get(socket)) {
                                             sendToClient(socket, new String[]{"MSG", "", "/ban <name> - Ban <name>"});
                                             sendToClient(socket, new String[]{"MSG", "", "/kick <name> - Kick <name>"});
                                             sendToClient(socket, new String[]{"MSG", "", "/addmod <name> - Add <name> as a mod"});
@@ -270,34 +270,45 @@ public class Server {
                                         sendToClient(socket, new String[]{"MSG", "", "/help - Show this menu"});
                                         break;
                                     case "/ban":
-                                        if (!isMod(socket)) {
-                                            sendToClient(socket, new String[]{"MSG", "", "You're not a mod!"});
+                                        if (!isMod(socket) || !loggedinmods.containsKey(clientnames.get(socket)) || !loggedinmods.get(clientnames.get(socket))) {
+                                            sendToClient(socket, new String[]{"MSG", "", "You're not a mod."});
                                             break;
                                         }
 
                                         if (cmd.length < 2) {
-                                            sendToClient(socket, new String[]{"MSG", "", "You forgot an argument!"});
+                                            sendToClient(socket, new String[]{"MSG", "", "You forgot an argument."});
                                             break;
                                         }
 
-                                        if (banClient(cmd[1], false)) {
+                                        if(cmd[1].equals(clientnames.get(socket))) {
+                                            sendToClient(socket, new String[]{"MSG", "", "You can't ban yourself."});
+                                            break;
+                                        }
+
+                                        if (!isMod(cmd[1]) || banClient(cmd[1], false)) {
                                             sendToClient(socket, new String[]{"MSG", "", "Banned client " + cmd[1]});
                                         } else {
                                             sendToClient(socket, new String[]{"MSG", "", "Can't ban " + cmd[1]});
                                         }
                                         break;
                                     case "/kick":
-                                        if (!isMod(socket)) {
-                                            sendToClient(socket, new String[]{"MSG", "", "You're not a mod!"});
+                                        if (!isMod(socket) || !loggedinmods.containsKey(clientnames.get(socket)) || !loggedinmods.get(clientnames.get(socket))) {
+                                            sendToClient(socket, new String[]{"MSG", "", "You're not a mod."});
                                             break;
                                         }
+
 
                                         if (cmd.length < 2) {
-                                            sendToClient(socket, new String[]{"MSG", "", "You forgot an argument!"});
+                                            sendToClient(socket, new String[]{"MSG", "", "You forgot an argument."});
+                                            break;
+                                        }
+                                        
+                                        if(cmd[1].equals(clientnames.get(socket))) {
+                                            sendToClient(socket, new String[]{"MSG", "", "You can't kick yourself."});
                                             break;
                                         }
 
-                                        if (kickClient(cmd[1], false)) {
+                                        if (!isMod(cmd[1]) || kickClient(cmd[1], false)) {
                                             sendToClient(socket, new String[]{"MSG", "", "Kicked " + cmd[1]});
                                         } else {
                                             sendToClient(socket, new String[]{"MSG", "", "Can't kick " + cmd[1]});
@@ -305,40 +316,52 @@ public class Server {
                                         break;
                                     case "/addmod":
                                         //Check if mod
-                                        if (!isMod(socket)) {
-                                            sendToClient(socket, new String[]{"MSG", "", "You're not a mod!"});
+                                        if (!isMod(socket) || !loggedinmods.containsKey(clientnames.get(socket)) || !loggedinmods.get(clientnames.get(socket))) {
+                                            sendToClient(socket, new String[]{"MSG", "", "You're not a mod."});
                                             break;
                                         }
 
                                         if (cmd.length < 2) {
-                                            sendToClient(socket, new String[]{"MSG", "", "You forgot an argument!"});
+                                            sendToClient(socket, new String[]{"MSG", "", "You forgot an argument."});
+                                            break;
+                                        }
+
+                                        if(cmd[1].equals(clientnames.get(socket))) {
+                                            sendToClient(socket, new String[]{"MSG", "", "You can't add yourself as a mod."});
                                             break;
                                         }
 
                                         if (isMod(cmd[1])) {
-                                            sendToClient(socket, new String[]{"MSG", "", cmd[1], " is already a mod!"});
+                                            sendToClient(socket, new String[]{"MSG", "", cmd[1], " is already a mod."});
                                         } else {
                                             //TODO
                                             sendToClient(socket, new String[]{"MSG", "", "added " + cmd[1] + " as a mod"});
                                         }
                                         break;
                                     case "/online":
-                                        sendToClient(socket, new String[]{"MSG", "", "There are currently " + clientcount + " clients out of " + maxclients + " client connected!"});
+                                        sendToClient(socket, new String[]{"MSG", "", "Currently there " + (clientcount > 1 ? "are " : "is ") + clientcount + " client" + (clientcount > 1 ? "s" : "") + " out of " + maxclients + " clients connected."});
                                         break;
                                     case "/msg":
                                         if (cmd.length < 2) {
-                                            sendToClient(socket, new String[]{"MSG", "", "You forgot an argument!"});
+                                            sendToClient(socket, new String[]{"MSG", "", "You forgot an argument."});
                                             break;
                                         }
 
                                         Socket receiver = getSocket(cmd[1]);
                                         if (receiver == null) {
-                                            sendToClient(socket, new String[]{"MSG", "", "Client not found"});
+                                            sendToClient(socket, new String[]{"MSG", "", "Client not found."});
                                             break;
                                         }
+
+                                        //Don't let a client send a message to itself
+                                        if (clientnames.get(receiver).equals(clientnames.get(socket))) {
+                                            sendToClient(socket, new String[]{"MSG", "", "You can't send a message to yourself."});
+                                            break;
+                                        }
+
                                         //Missing message
                                         if (cmd.length < 3) {
-                                            sendToClient(socket, new String[]{"MSG", "", "You are missing a message"});
+                                            sendToClient(socket, new String[]{"MSG", "", "You are missing a message."});
                                             break;
                                         }
 
@@ -351,7 +374,7 @@ public class Server {
                                         sendToClient(socket, new String[]{"MSG", "", "Sent message to " + cmd[1]});
                                         break;
                                     default:
-                                        sendToClient(socket, new String[]{"MSG", "", "Command not found!"});
+                                        sendToClient(socket, new String[]{"MSG", "", "Command not found."});
                                         break;
                                 }
                             } else
@@ -363,10 +386,11 @@ public class Server {
                                 }
 
                         } else if (msg[0].equals("CMD")) {
+                            loggedinmods.remove(socket);
                             if (msg[2].equals("REG")) {
                                 //Check if user is banned
                                 if (bannedclients.contains(msg[1])) {
-                                    logf("%s tried to register but got kicked because he's banned!", msg[1]);
+                                    logf("%s tried to register but got kicked because he's banned.", msg[1]);
                                     sendToClient(socket, new String[]{"CMD", "", "BAN"});
                                 }
                                 //Check if nickname is already assigned to anyone
@@ -387,7 +411,7 @@ public class Server {
                                         sendToClient(socket, new String[]{"MSG", "", motd});
                                     }
                                     logf("Client %s registered as %s", socket.getInetAddress().toString(), msg[1]);
-                                    sendToAllClients(new String[]{"MSG", "", msg[1] + " joined the chat room!"});
+                                    sendToAllClients(new String[]{"MSG", "", msg[1] + " joined the chat room."});
 
                                     //Send new clientlist to all players
                                     String[] clientlist = Arrays.copyOf(clientnames.values().toArray(), clientnames.values().toArray().length, String[].class);
@@ -404,6 +428,7 @@ public class Server {
                                     if (isMod(msg[1])) {
                                         if (msg.length < 4 || msg[3].isEmpty()) {
                                             logf("Client %s (%s) tried to login as a mod but failed to send a password", msg[1], socket.getInetAddress().toString());
+                                            loggedinmods.remove(socket);
                                             sendToClient(socket, new String[]{"CMD", "", "NOPASSWD"});
                                         } else {
                                             if (!loggedinmods.containsKey(msg[1])) {
@@ -412,7 +437,7 @@ public class Server {
                                                     loggedinmods.put(msg[1], true);
                                                     sendToClient(socket, new String[]{"CMD", "", "REGSUCCESS"});
                                                 } else {
-                                                    logf("Client %s (%s) tried to login as a mod but has a wrong password!", msg[1], socket.getInetAddress().toString());
+                                                    logf("Client %s (%s) tried to login as a mod but has a wrong password.", msg[1], socket.getInetAddress().toString());
                                                     sendToClient(socket, new String[]{"CMD", "", "WRONGPASSWD"});
                                                 }
                                             } else {
@@ -434,7 +459,7 @@ public class Server {
                     }
                 } catch (IOException e) {
                     if (clients.contains(socket)) {
-                        logf("Client %s (%s) disconnected!", clientnames.get(socket), socket.getInetAddress().toString());
+                        logf("Client %s (%s) disconnected.", clientnames.get(socket), socket.getInetAddress().toString());
                         sendToAllClients(new String[]{"MSG", "", clientnames.get(socket) + " left the chat room"});
 
                         if (isMod(clientnames.get(socket))) {
@@ -505,11 +530,11 @@ public class Server {
                                         modded = true;
                                         System.out.printf("%s is now a mod!\n", name);
                                         String password = generatePassword();
-                                        System.out.println(password);
-                                        System.out.println(hashPassword(password));
+                                        String hash = hashPassword(password);
                                         sendToClient(s, new String[]{"CMD", "", "MODC", password});
                                         mods.add(name);
-                                        modpasswords.put(name, hashPassword(password));
+                                        modpasswords.put(name, hash);
+                                        loggedinmods.put(name, true);
                                         break;
                                     }
                                 }
@@ -572,7 +597,7 @@ public class Server {
                             pw.write(newjson);
                             pw.close();
                         } catch (IOException e) {
-                            log("Error while saving config!!");
+                            log("Error while saving config!.");
                             e.printStackTrace();
                         }
                         System.exit(0);
@@ -602,15 +627,15 @@ public class Server {
                             try {
                                 newcount = Integer.parseInt(cmds[1]);
                             } catch (NumberFormatException e) {
-                                System.out.println("This is not a number!");
+                                System.out.println("This is not a number.");
                                 break;
                             }
                             if (newcount < 1) {
-                                System.out.println("Error: This number is too low!");
+                                System.out.println("Error: This number is too low.");
                                 break;
                             }
                             if (clientcount > newcount) {
-                                System.out.println("Warning: The max player count is over the limit!");
+                                System.out.println("Warning: The max player count is over the limit.");
                             }
                             maxclients = newcount;
                             System.out.printf("Successfully changed the client limit to %d!\n", newcount);
@@ -621,7 +646,7 @@ public class Server {
                         break;
                     case "getmodlist":
                         if (mods.size() == 0) {
-                            System.out.println("No one is a mod. Add some with addmod <nickname>!");
+                            System.out.println("No one is a mod. Add some with addmod <nickname>.");
                         } else {
                             for (String client : mods) {
                                 System.out.println(client);
@@ -657,13 +682,13 @@ public class Server {
                         }
                         break;
                     case "getmodpasswords":
-                        if (modpasswords.isEmpty()) System.out.println("No Modpasswords saved!");
+                        if (modpasswords.isEmpty()) System.out.println("No Modpasswords saved.");
                         for (String key : modpasswords.keySet()) {
                             System.out.printf("%s -> %s", key, modpasswords.get(key));
                         }
                         break;
                     case "help":
-                        System.out.println("current available commands:");
+                        System.out.println("currently available commands:");
                         System.out.println("online");
                         System.out.println("kick <nickname>");
                         System.out.println("ban <nickname>");
@@ -681,7 +706,7 @@ public class Server {
                         System.out.println("help");
                         break;
                     default:
-                        System.out.println("Command not found!");
+                        System.out.println("Command not found.");
                         break;
                 }
             }
@@ -754,6 +779,9 @@ public class Server {
                     if (clientnames.get(s).equals(name)) {
                         sendToClient(s, new String[]{"CMD", "", "BAN"});
                         clientcount--;
+                        if (isMod(s)) {
+                            loggedinmods.remove(s);
+                        }
                         clients.remove(s);
                         clientnames.remove(s);
                         try {
@@ -788,6 +816,9 @@ public class Server {
                 kicked = true;
                 sendToClient(s, new String[]{"CMD", "", "KICK"});
                 clientcount--;
+                if (isMod(s)) {
+                    loggedinmods.remove(s);
+                }
                 clients.remove(s);
                 clientnames.remove(s);
                 try {

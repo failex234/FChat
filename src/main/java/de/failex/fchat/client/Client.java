@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+
 public class Client {
 
     Thread incoming;
@@ -99,6 +100,7 @@ public class Client {
                 MainGUI.alert("Error", "Error", "An error occured, please report the following\n" + trace, Alert.AlertType.ERROR));
     }
 
+
     /**
      * main incoming packet thread
      */
@@ -147,6 +149,7 @@ public class Client {
                                         MainGUI.alert("Duplicate nickname", "Duplicate nickname", "Sorry but this nickname is already taken!", Alert.AlertType.ERROR);
                                     });
                                     MainGUI.clearChat();
+                                    MainGUI.clearClientList();
                                     Thread.currentThread().interrupt();
                                     return;
                                 } else if (msg[2].equals("FULL") && MainGUI.connected) {
@@ -162,6 +165,7 @@ public class Client {
                                         MainGUI.alert("Room full", "Romm full!", "Sorry but the chatroom is full", Alert.AlertType.ERROR);
                                     });
                                     MainGUI.clearChat();
+                                    MainGUI.clearClientList();
                                     server.close();
                                     MainGUI.disconnect();
                                     Thread.currentThread().interrupt();
@@ -188,6 +192,7 @@ public class Client {
                                         Platform.runLater(() -> MainGUI.alert("Banned", "Banned", "You are banned from the server!", Alert.AlertType.ERROR));
                                     }
                                     MainGUI.clearChat();
+                                    MainGUI.clearClientList();
                                     server.close();
                                     MainGUI.disconnect();
                                     Thread.currentThread().interrupt();
@@ -197,6 +202,13 @@ public class Client {
                                     Platform.runLater(() ->
                                             MainGUI.alert("Added as mod", "Added as mod", "You have been added as a moderator! In the future\n" +
                                                     "you'll need the password '" + password + "' to connect to the server", Alert.AlertType.CONFIRMATION));
+
+                                    //Enable mod tools
+                                    c.btn_broadcast.setDisable(false);
+                                    c.btn_clear.setDisable(false);
+                                    c.btn_ban.setDisable(false);
+                                    c.btn_kick.setDisable(false);
+                                    c.btn_msg.setDisable(false);
                                 } else if (msg[2].equals("NOTREG")) {
                                     MainGUI.connected = false;
                                     c.tb_nickname.setDisable(false);
@@ -206,6 +218,7 @@ public class Client {
                                     c.btn_msg.setDisable(true);
                                     Platform.runLater(() -> MainGUI.alert("Login failed", "Logged failed", "The Mod-login has failed due to a missing registration!", Alert.AlertType.ERROR));
                                     MainGUI.clearChat();
+                                    MainGUI.clearClientList();
                                     server.close();
                                     MainGUI.disconnect();
                                     Thread.currentThread().interrupt();
@@ -245,12 +258,14 @@ public class Client {
                                     c.btn_connect.setDisable(false);
                                     Platform.runLater(() -> MainGUI.alert("Not registered!", "Not registered!", "You tried to send a message without being registered at the server!", Alert.AlertType.ERROR));
                                     MainGUI.clearChat();
+                                    MainGUI.clearClientList();
 
                                     //Disable mod tools
                                     c.btn_broadcast.setDisable(true);
                                     c.btn_clear.setDisable(true);
                                     c.btn_ban.setDisable(true);
                                     c.btn_kick.setDisable(true);
+                                    c.btn_msg.setDisable(true);
                                     c.btn_msg.setDisable(true);
 
                                     server.close();
@@ -283,14 +298,38 @@ public class Client {
                     c.btn_clear.setDisable(true);
                     c.btn_ban.setDisable(true);
                     c.btn_kick.setDisable(true);
+                    c.btn_msg.setDisable(true);
 
                     Platform.runLater(() -> MainGUI.alert("Connection lost", "Connection lost!", "Connection to the server lost! Logging out...", Alert.AlertType.INFORMATION));
                     MainGUI.disconnect();
                     MainGUI.clearChat();
+                    MainGUI.clearClientList();
                     Thread.currentThread().interrupt();
                     return;
                 } catch (Exception e) {
-                    printException(e);
+                    if (e instanceof EOFException) {
+                        MainGUI.connected = false;
+                        c.tb_nickname.setDisable(false);
+                        c.tb_host.setDisable(false);
+                        c.tb_port.setDisable(false);
+                        c.btn_connect.setDisable(false);
+
+                        //Disable mod tools
+                        c.btn_broadcast.setDisable(true);
+                        c.btn_clear.setDisable(true);
+                        c.btn_ban.setDisable(true);
+                        c.btn_kick.setDisable(true);
+                        c.btn_msg.setDisable(true);
+
+                        Platform.runLater(() -> MainGUI.alert("Connection lost", "Connection lost!", "Connection to the server lost! Logging out...", Alert.AlertType.INFORMATION));
+                        MainGUI.disconnect();
+                        MainGUI.clearChat();
+                        MainGUI.clearClientList();
+                        Thread.currentThread().interrupt();
+                        return;
+                    } else {
+                        printException(e);
+                    }
                 }
             }
         }
