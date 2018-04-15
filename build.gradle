@@ -42,5 +42,8 @@ jar {
       'Main-Class': 'de.failex.fchat.FChat'
     )
   }
-}
 
+  from {
+    configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+  }
+}
