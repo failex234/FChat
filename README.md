@@ -1,9 +1,7 @@
 # FChat
 [![Build Status](https://travis-ci.org/failex234/FChat.svg?branch=master)](https://travis-ci.org/failex234/FChat)
 
-FChat is a pretty simple chat client and server
-
-It is still in progress!
+FChat is a pretty basic work in progress chat client and server
 ***
 ## Usage
 ### Client
