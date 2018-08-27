@@ -35,8 +35,11 @@ public class Server {
     private ArrayList<String> mods = new ArrayList<>();
     private HashMap<String, String> modpasswords = new HashMap<>();
     private HashMap<String, Boolean> loggedinmods = new HashMap<>();
+    private int version;
 
-    public Server(int port) {
+    public Server(int port, int version) {
+        this.version = version;
+        //TODO Adapt server to new protocol
         if (config.exists()) {
             log("Config found, reading config");
             System.out.printf("");

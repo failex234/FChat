@@ -8,7 +8,10 @@ import javafx.stage.Stage;
 
 public class StartGUI extends Application {
 
-    public static void runGUI(String[] args) {
+    private int version;
+
+    public void runGUI(String[] args, int version) {
+        this.version = version;
         launch(args);
     }
 
@@ -20,7 +23,7 @@ public class StartGUI extends Application {
         primaryStage.setTitle("FChat");
         primaryStage.setScene(new Scene(root));
         primaryStage.setResizable(false);
-        new MainGUI(loader.getController(), primaryStage);
+        new MainGUI(loader.getController(), primaryStage, version);
         primaryStage.show();
     }
 }

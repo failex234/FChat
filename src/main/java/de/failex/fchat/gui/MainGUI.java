@@ -1,20 +1,32 @@
 package de.failex.fchat.gui;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import de.failex.fchat.client.Client;
+import de.failex.fchat.client.ClientConfig;
+import de.failex.fchat.server.ServerConfig;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.stage.Stage;
 
+import java.io.*;
+import java.util.UUID;
+
 public class MainGUI {
 
-    //TODO Let user choose username
     public static boolean connected = false;
+    private Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    File config = new File("config.json");
+    ClientConfig clientcfg;
+    UUID clientid;
     static Client cl;
     static MainGUIController c;
 
-    public MainGUI(MainGUIController c, Stage stage) {
+    public MainGUI(MainGUIController c, Stage stage, int version) {
+
+        //TODO signal handler to save config / to save nickname to config
         this.c = c;
         //Set standard port
         c.tb_port.setText("1552");
@@ -30,6 +42,36 @@ public class MainGUI {
         c.btn_msg.setDisable(true);
 
         c.title.setVisible(false);
+
+        if(config.exists()) {
+            try (BufferedReader reader = new BufferedReader(new FileReader(config))) {
+                StringBuilder sb = new StringBuilder();
+                String line = reader.readLine();
+
+                while (line != null) {
+                    sb.append(line + "\n");
+                    line = reader.readLine();
+                }
+                clientcfg = gson.fromJson(sb.toString(), ClientConfig.class);
+                clientid = clientcfg.getClientid();
+                c.tb_nickname.setText(clientcfg.getNickname());
+
+                alert("Welcome to FChat!", "FChat start","Welcome to FChat, the work in progress Chat written in Java! (REMOVE LATER: Your UUID is " + clientid.toString() + ")", Alert.AlertType.INFORMATION);
+            } catch (IOException e) {
+                StringWriter sw = new StringWriter();
+                PrintWriter pw = new PrintWriter(sw);
+                e.printStackTrace(pw);
+                String trace = sw.toString();
+
+                alert("Error", "Error while reading config", "Can't load config because of\n" + trace, Alert.AlertType.ERROR);
+            }
+        } else {
+            clientcfg = new ClientConfig();
+            clientid = UUID.randomUUID();
+            clientcfg.setClientid(clientid);
+
+            alert("Welcome to FChat!", "First start","Welcome to FChat, the work in progress Chat written in Java! (REMOVE LATER: Your UUID is " + clientid.toString() + ")", Alert.AlertType.INFORMATION);
+        }
 
         //TODO remove horizontal scrolling !important
 
@@ -74,7 +116,8 @@ public class MainGUI {
             if (c.tb_nickname.getText().contains(" ")) {
                 alert("No spaces", "No spaces", "Sorry but you can't have spaces in your nickname!", Alert.AlertType.INFORMATION);
             } else {
-                cl = new Client(c.tb_host.getText(), Integer.parseInt(c.tb_port.getText()), c);
+                clientcfg.setNickname(c.tb_nickname.getText());
+                cl = new Client(c.tb_host.getText(), Integer.parseInt(c.tb_port.getText()), c, version, clientid);
             }
         });
 

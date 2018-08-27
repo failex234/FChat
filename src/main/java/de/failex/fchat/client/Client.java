@@ -6,14 +6,13 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Alert;
-import javafx.scene.control.TextField;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.io.*;
 import java.net.*;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 
 public class Client {
@@ -24,9 +23,12 @@ public class Client {
     ObjectOutputStream out;
     MainGUIController c;
 
+    UUID clientid;
+
     //TODO Check ob Verbindung getrennt ist
-    public Client(String hostaddress, int port, MainGUIController c) {
+    public Client(String hostaddress, int port, MainGUIController c, int version, UUID clientid) {
         this.c = c;
+        this.clientid = clientid;
         try {
             //Check if host is up / hostaddress exists
             InetAddress.getByName(hostaddress);
@@ -36,7 +38,7 @@ public class Client {
             server.connect(address);
             MainGUI.connected = true;
 
-            //Disable hostname textfield, port textfield and connect button because we're connected
+            //Disable hostname textfield, port textfield and connect button
             c.btn_connect.setDisable(true);
             c.tb_host.setDisable(true);
             c.tb_port.setDisable(true);
@@ -46,8 +48,8 @@ public class Client {
 
             this.nickname = c.tb_nickname.getText();
 
-            //Register as client at the server
-            sendMessage(1, "REG");
+            //Register as client at the server and add the protocol version to ensure that both are using the same protocol
+            sendMessage(1, version + "REG");
 
             incoming = new Thread(new ClientThread());
             incoming.start();
@@ -55,14 +57,50 @@ public class Client {
         } catch (UnknownHostException e) {
             Platform.runLater(() ->
                     MainGUI.alert("Connection failed", "Connection failed!", "Unable to connect to the server!\n", Alert.AlertType.ERROR));
+
+            //Enable everything again since the connection was not successful
+            c.btn_connect.setDisable(false);
+            c.tb_host.setDisable(false);
+            c.tb_port.setDisable(false);
+            c.tb_nickname.setDisable(false);
+            c.btn_msg.setDisable(true);
+            MainGUI.connected = false;
+            incoming.interrupt();
         } catch (ConnectException e) {
             Platform.runLater(() ->
                     MainGUI.alert("Server not online", "Server not online!", "There is no server online under that address!\n", Alert.AlertType.ERROR));
+
+            //Enable everything again since the connection was not successful
+            c.btn_connect.setDisable(false);
+            c.tb_host.setDisable(false);
+            c.tb_port.setDisable(false);
+            c.tb_nickname.setDisable(false);
+            c.btn_msg.setDisable(true);
+            MainGUI.connected = false;
+            incoming.interrupt();
         } catch (SocketException e) {
             Platform.runLater(() ->
                     MainGUI.alert("Invalid address", "Invalid address", "You entered an invalid address!\n", Alert.AlertType.ERROR));
+
+            //Enable everything again since the connection was not successful
+            c.btn_connect.setDisable(false);
+            c.tb_host.setDisable(false);
+            c.tb_port.setDisable(false);
+            c.tb_nickname.setDisable(false);
+            c.btn_msg.setDisable(true);
+            MainGUI.connected = false;
+            incoming.interrupt();
         } catch (IOException e) {
             printException(e);
+
+            //Enable everything again since the connection was not successful
+            c.btn_connect.setDisable(false);
+            c.tb_host.setDisable(false);
+            c.tb_port.setDisable(false);
+            c.tb_nickname.setDisable(false);
+            c.btn_msg.setDisable(true);
+            MainGUI.connected = false;
+            incoming.interrupt();
         }
     }
 
@@ -74,7 +112,7 @@ public class Client {
      * @param extra some extra content to send
      */
     public void sendMessage(int type, String msg, String... extra) {
-        String[] temp = ArrayUtils.addAll(new String[]{type == 0 ? "MSG" : "CMD", nickname, msg}, extra);
+        String[] temp = ArrayUtils.addAll(new String[]{type == 0 ? "MSG" : "CMD", clientid.toString(), nickname, msg}, extra);
         try {
             out = new ObjectOutputStream(server.getOutputStream());
             out.flush();
@@ -198,10 +236,8 @@ public class Client {
                                     Thread.currentThread().interrupt();
                                     return;
                                 } else if (msg[2].equals("MODC") && MainGUI.connected) {
-                                    String password = msg[3];
                                     Platform.runLater(() ->
-                                            MainGUI.alert("Added as mod", "Added as mod", "You have been added as a moderator! In the future\n" +
-                                                    "you'll need the password '" + password + "' to connect to the server", Alert.AlertType.CONFIRMATION));
+                                            MainGUI.alert("Added as mod", "Added as mod", "Congratulations you're now a moderator!\nYou will keep the status throughout reconnections", Alert.AlertType.CONFIRMATION));
 
                                     //Enable mod tools
                                     c.btn_broadcast.setDisable(false);
@@ -209,22 +245,6 @@ public class Client {
                                     c.btn_ban.setDisable(false);
                                     c.btn_kick.setDisable(false);
                                     c.btn_msg.setDisable(false);
-                                } else if (msg[2].equals("NOTREG")) {
-                                    MainGUI.connected = false;
-                                    c.tb_nickname.setDisable(false);
-                                    c.tb_host.setDisable(false);
-                                    c.tb_port.setDisable(false);
-                                    c.btn_connect.setDisable(false);
-                                    c.btn_msg.setDisable(true);
-                                    Platform.runLater(() -> MainGUI.alert("Login failed", "Logged failed", "The Mod-login has failed due to a missing registration!", Alert.AlertType.ERROR));
-                                    MainGUI.clearChat();
-                                    MainGUI.clearClientList();
-                                    server.close();
-                                    MainGUI.disconnect();
-                                    Thread.currentThread().interrupt();
-                                    return;
-                                } else if (msg[2].equals("NOPASSWD")) {
-                                    Platform.runLater(() -> MainGUI.alert("Missing password", "Missing password", "You failed to enter a password", Alert.AlertType.ERROR));
                                 } else if (msg[2].equals("REGSUCCESS")) {
                                     Platform.runLater(() -> MainGUI.alert("Login successful", "Success!", "You have successfully logged in as a mod", Alert.AlertType.INFORMATION));
                                     c.btn_broadcast.setDisable(false);
@@ -232,24 +252,6 @@ public class Client {
                                     c.btn_ban.setDisable(false);
                                     c.btn_kick.setDisable(false);
                                     c.btn_msg.setDisable(false);
-                                } else if (msg[2].equals("WRONGPASSWD")) {
-                                    Platform.runLater(() -> MainGUI.alert("Wrong password", "Incorrect password", "The password you have entered is wrong!", Alert.AlertType.ERROR));
-                                } else if (msg[2].equals("ALREADYLOGGED")) {
-                                    Platform.runLater(() -> MainGUI.alert("Already logged in", "Already a mod", "You are already logged in as a mod!", Alert.AlertType.INFORMATION));
-                                } else if (msg[2].equals("NOMOD")) {
-                                    Platform.runLater(() -> MainGUI.alert("No mod", "No mod", "You're no mod so you can't login as one!", Alert.AlertType.ERROR));
-                                } else if (msg[2].equals("MODL")) {
-                                    final String[] passwd = {""};
-                                    Platform.runLater(() -> {
-                                        Alert a = new Alert(Alert.AlertType.INFORMATION);
-                                        a.setTitle("Login");
-                                        a.setHeaderText("Please enter your password!");
-                                        TextField tb_passwd = new TextField();
-                                        a.getDialogPane().setContent(tb_passwd);
-                                        a.setOnCloseRequest((e) -> passwd[0] = tb_passwd.getText());
-                                        a.showAndWait();
-                                        sendMessage(1, "REGMOD", passwd);
-                                    });
                                 } else if (msg[2].equals("NOTCONNECTED")) {
                                     MainGUI.connected = false;
                                     c.tb_nickname.setDisable(false);
