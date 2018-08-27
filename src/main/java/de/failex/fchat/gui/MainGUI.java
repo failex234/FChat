@@ -70,6 +70,18 @@ public class MainGUI {
             clientid = UUID.randomUUID();
             clientcfg.setClientid(clientid);
 
+            String newcfg = gson.toJson(clientcfg);
+
+            config.delete();
+
+            try {
+                PrintWriter pw = new PrintWriter(config);
+                pw.write(newcfg);
+                pw.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
             alert("Welcome to FChat!", "First start","Welcome to FChat, the work in progress Chat written in Java! (REMOVE LATER: Your UUID is " + clientid.toString() + ")", Alert.AlertType.INFORMATION);
         }
 
