@@ -3,10 +3,6 @@
 - mehr Customizability im Client 
 (Chatnachrichten, Nickname, Design usw.)
 
-- Teilnehmerliste im Client für Mods
-
-- Extra Markierung von Mods im Chat
-
 - Alle Module sind Serverseitig 
 abstellbar / einstellbar
 
@@ -14,10 +10,3 @@ abstellbar / einstellbar
 client kann seinen eigenen Chat clearen
 
 - Chatfarbcodes
-
-- Konsolenkommandos hinzufügen / ausschreiben
-
-- Passwörter für Mods
-
-Unfixed:
-- Client rafft nicht, dass der Nickname ein Duplikat ist

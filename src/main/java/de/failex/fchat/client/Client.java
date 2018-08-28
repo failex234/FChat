@@ -25,8 +25,9 @@ public class Client {
 
     UUID clientid;
 
-    //TODO Check ob Verbindung getrennt ist
-    public Client(String hostaddress, int port, MainGUIController c, int version, UUID clientid) {
+    final int CLIENTPROTVERSION = 2;
+    //TODO: implement signal handler and send exit command to server on program exit. Also implement the /exit command
+    public Client(String hostaddress, int port, MainGUIController c, UUID clientid) {
         this.c = c;
         this.clientid = clientid;
         try {
@@ -49,7 +50,7 @@ public class Client {
             this.nickname = c.tb_nickname.getText();
 
             //Register as client at the server and add the protocol version to ensure that both are using the same protocol
-            sendMessage(1, version + "REG");
+            sendMessage(1,  CLIENTPROTVERSION + "REG");
 
             incoming = new Thread(new ClientThread());
             incoming.start();
@@ -245,6 +246,16 @@ public class Client {
                                     c.btn_ban.setDisable(false);
                                     c.btn_kick.setDisable(false);
                                     c.btn_msg.setDisable(false);
+                                } else if(msg[2].equals("MODR") && MainGUI.connected) {
+                                    Platform.runLater(() ->
+                                            MainGUI.alert("Removed as a mod", "Removed as a mod", "Sorry but you're no longer a moderator", Alert.AlertType.CONFIRMATION));
+
+                                    //Enable mod tools
+                                    c.btn_broadcast.setDisable(true);
+                                    c.btn_clear.setDisable(true);
+                                    c.btn_ban.setDisable(true);
+                                    c.btn_kick.setDisable(true);
+                                    c.btn_msg.setDisable(true);
                                 } else if (msg[2].equals("REGSUCCESS")) {
                                     Platform.runLater(() -> MainGUI.alert("Login successful", "Success!", "You have successfully logged in as a mod", Alert.AlertType.INFORMATION));
                                     c.btn_broadcast.setDisable(false);
@@ -275,7 +286,6 @@ public class Client {
                                     Thread.currentThread().interrupt();
                                     return;
                                 } else if (msg[2].equals("LIST")) {
-                                    //TODO: Remove first three elements
                                     String[] clientsarray = new String[msg.length - 3];
                                     int clientarrayindex = 0;
                                     for (int i = 3; i < msg.length; i++) {

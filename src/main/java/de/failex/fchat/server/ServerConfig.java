@@ -9,7 +9,6 @@ public class ServerConfig {
     private ArrayList<String> mods = new ArrayList<>();
     private int maxclients;
     private int passwordsize;
-    private HashMap<String, String> modpasswords = new HashMap<>();
     private ArrayList<String> bannedclients = new ArrayList<>();
 
     public String getMotd() {
@@ -35,14 +34,6 @@ public class ServerConfig {
 
     public void setMaxclients(int maxclients) {
         this.maxclients = maxclients;
-    }
-
-    public HashMap<String, String> getModpasswords() {
-        return modpasswords;
-    }
-
-    public void setModpasswords(HashMap<String, String> modpasswords) {
-        this.modpasswords = modpasswords;
     }
 
     public int getPasswordsize() {

@@ -24,7 +24,7 @@ public class MainGUI {
     static Client cl;
     static MainGUIController c;
 
-    public MainGUI(MainGUIController c, Stage stage, int version) {
+    public MainGUI(MainGUIController c, Stage stage) {
 
         //TODO signal handler to save config / to save nickname to config
         this.c = c;
@@ -55,8 +55,6 @@ public class MainGUI {
                 clientcfg = gson.fromJson(sb.toString(), ClientConfig.class);
                 clientid = clientcfg.getClientid();
                 c.tb_nickname.setText(clientcfg.getNickname());
-
-                alert("Welcome to FChat!", "FChat start","Welcome to FChat, the work in progress Chat written in Java! (REMOVE LATER: Your UUID is " + clientid.toString() + ")", Alert.AlertType.INFORMATION);
             } catch (IOException e) {
                 StringWriter sw = new StringWriter();
                 PrintWriter pw = new PrintWriter(sw);
@@ -82,7 +80,7 @@ public class MainGUI {
                 e.printStackTrace();
             }
 
-            alert("Welcome to FChat!", "First start","Welcome to FChat, the work in progress Chat written in Java! (REMOVE LATER: Your UUID is " + clientid.toString() + ")", Alert.AlertType.INFORMATION);
+            alert("Welcome to FChat!", "First start","Welcome to FChat, the work in progress Chat written in Java!", Alert.AlertType.INFORMATION);
         }
 
         //TODO remove horizontal scrolling !important
@@ -129,7 +127,7 @@ public class MainGUI {
                 alert("No spaces", "No spaces", "Sorry but you can't have spaces in your nickname!", Alert.AlertType.INFORMATION);
             } else {
                 clientcfg.setNickname(c.tb_nickname.getText());
-                cl = new Client(c.tb_host.getText(), Integer.parseInt(c.tb_port.getText()), c, version, clientid);
+                cl = new Client(c.tb_host.getText(), Integer.parseInt(c.tb_port.getText()), c, clientid);
             }
         });
 
