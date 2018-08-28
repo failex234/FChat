@@ -156,6 +156,29 @@ public class MainGUI {
             }
 
         });
+
+        c.btn_ban.setOnMouseClicked(event -> {
+            String name = (String) c.lv_clients.getSelectionModel().getSelectedItem();
+            if (!name.isEmpty()) {
+                cl.sendMessage(0, "/ban " + name);
+            }
+        });
+
+        c.btn_kick.setOnMouseClicked(event -> {
+            String name = (String) c.lv_clients.getSelectionModel().getSelectedItem();
+            if (!name.isEmpty()) {
+                cl.sendMessage(0, "/kick " + name);
+            }
+        });
+
+        c.btn_clear.setOnMouseClicked(event -> {
+            cl.sendMessage(0, "/clear");
+        });
+
+        c.btn_broadcast.setOnMouseClicked(event -> {
+            cl.sendMessage(0, "/broadcast " + c.tb_msg.getText());
+            c.tb_msg.setText("");
+        });
     }
 
     /**

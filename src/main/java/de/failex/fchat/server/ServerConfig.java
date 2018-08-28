@@ -2,11 +2,12 @@ package de.failex.fchat.server;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.UUID;
 
 public class ServerConfig {
 
     private String motd = "";
-    private ArrayList<String> mods = new ArrayList<>();
+    private ArrayList<UUID> moduuids = new ArrayList<UUID>();
     private int maxclients;
     private int passwordsize;
     private ArrayList<String> bannedclients = new ArrayList<>();
@@ -17,14 +18,6 @@ public class ServerConfig {
 
     public void setMotd(String motd) {
         this.motd = motd;
-    }
-
-    public ArrayList<String> getMods() {
-        return mods;
-    }
-
-    public void setMods(ArrayList<String> mods) {
-        this.mods = mods;
     }
 
     public int getMaxclients() {
@@ -50,5 +43,13 @@ public class ServerConfig {
 
     public void setBannedclients(ArrayList<String> bannedclients) {
         this.bannedclients = bannedclients;
+    }
+
+    public ArrayList<UUID> getModuuids() {
+        return moduuids;
+    }
+
+    public void setModuuids(ArrayList<UUID> moduuids) {
+        this.moduuids = moduuids;
     }
 }

@@ -14,14 +14,15 @@ public class Server {
     private ServerSocket mainserver;
     private Thread serverthread = null;
     private Thread interpreter = null;
+    private Thread timeouthread = null;
 
     int port;
     //TODO Should be user definable
     private int maxclients;
-    private int clientcount = 0;
+    protected static int clientcount = 0;
     private int passwordsize = 8;
 
-    private ArrayList<ConnectedClient> clients = new ArrayList<>();
+    protected static ArrayList<ConnectedClient> clients = new ArrayList<>();
 
     private ArrayList<String> bannedclients = new ArrayList<>();
 
@@ -30,7 +31,7 @@ public class Server {
     private Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
     private String motd = "";
-    private ArrayList<String> mods = new ArrayList<>();
+    private ArrayList<UUID> moduuids;
     private final int SERVERPROTVERSION = 2;
 
     public Server(int port) {
@@ -49,9 +50,9 @@ public class Server {
                 }
                 cfg = gson.fromJson(sb.toString(), ServerConfig.class);
                 motd = cfg.getMotd();
-                mods = cfg.getMods();
                 maxclients = cfg.getMaxclients();
                 bannedclients = cfg.getBannedclients();
+                moduuids = cfg.getModuuids();
             } catch (IOException e) {
                 log("Error reading config");
                 e.printStackTrace();
@@ -79,9 +80,11 @@ public class Server {
         this.port = port;
         logf("Server started successfully! listening for connections on port %d", port);
         this.interpreter = new Thread(new InterpreterThread());
-        interpreter.start();
         this.serverthread = new Thread(new ServerThread());
+        this.timeouthread = new Thread(new TimeoutThread());
         this.serverthread.start();
+        this.interpreter.start();
+        this.timeouthread.start();
     }
 
     //TODO: Remove user from mod arrarylist on disconnect
@@ -120,6 +123,8 @@ public class Server {
         } catch (IOException e) {
             //Client disconnected
             //e.printStackTrace();
+            clientcount--;
+            clients.remove(getClient(client));
         }
     }
 
@@ -220,12 +225,15 @@ public class Server {
                                     case "/help":
                                         //Send help menu based on if client is mod
                                         sendToClient(socket, new String[]{"MSG", "", "Available commands"});
-                                        sendToClient(socket, new String[]{"MSG", "", "/msg <name> - Send a private message to <name>"});
+                                        sendToClient(socket, new String[]{"MSG", "", "/msg <name> <message> - Send a private message to <name>"});
                                         sendToClient(socket, new String[]{"MSG", "", "/online - See who's online"});
+                                        sendToClient(socket, new String[]{"MSG", "", "/disconnect - Disconnect securely from the server"});
                                         if (sender.isModerator()) {
                                             sendToClient(socket, new String[]{"MSG", "", "/ban <name> - Ban <name>"});
                                             sendToClient(socket, new String[]{"MSG", "", "/kick <name> - Kick <name>"});
                                             sendToClient(socket, new String[]{"MSG", "", "/addmod <name> - Add <name> as a mod"});
+                                            sendToClient(socket, new String[]{"MSG", "", "/clear - Force a chat clear for everybody"});
+                                            sendToClient(socket, new String[]{"MSG", "", "/broadcast <message> - Broadcasts a message"});
                                         }
                                         sendToClient(socket, new String[]{"MSG", "", "/help - Show this menu"});
                                         break;
@@ -245,7 +253,7 @@ public class Server {
                                             break;
                                         }
 
-                                        if (!isMod(cmd[1]) || banClient(cmd[1], false)) {
+                                        if (!isMod(getClient(cmd[1]).getUniqueId()) || banClient(cmd[1], false)) {
                                             sendToClient(socket, new String[]{"MSG", "", "Banned client " + cmd[1]});
                                         } else {
                                             sendToClient(socket, new String[]{"MSG", "", "Can't ban " + cmd[1]});
@@ -268,7 +276,7 @@ public class Server {
                                             break;
                                         }
 
-                                        if (!isMod(cmd[1]) || kickClient(cmd[1], false)) {
+                                        if (!isMod(getClient(cmd[1]).getUniqueId()) || kickClient(cmd[1], false)) {
                                             sendToClient(socket, new String[]{"MSG", "", "Kicked " + cmd[1]});
                                         } else {
                                             sendToClient(socket, new String[]{"MSG", "", "Can't kick " + cmd[1]});
@@ -291,16 +299,21 @@ public class Server {
                                             break;
                                         }
 
-                                        if (isMod(cmd[1])) {
-                                            sendToClient(socket, new String[]{"MSG", "", cmd[1], " is already a mod."});
-                                        } else {
-                                            mods.add(cmd[1]);
-                                            if (isConnected(cmd[1])) {
-                                                ConnectedClient newmod = getClient(cmd[1]);
-                                                newmod.setModerator(true);
-                                                sendToClient(newmod.getSocket(), new String[]{"MSG", "", sender.getNickname() + " added you as a moderator"});
+                                        if (isConnected(cmd[1])) {
+                                            ConnectedClient newmod = getClient(cmd[1]);
+
+                                            if (isMod(newmod.getUniqueId())) {
+                                                sendToClient(socket, new String[]{"MSG", "", cmd[1], " is already a mod!"});
+                                                break;
                                             }
+
+                                            moduuids.add(newmod.getUniqueId());
+                                            newmod.setModerator(true);
+                                            sendToClient(newmod.getSocket(), new String[]{"MSG", "", sender.getNickname() + " added you as a moderator"});
+                                            sendToClient(newmod.getSocket(), new String[]{"CMD", "", "MODC"});
                                             sendToClient(socket, new String[]{"MSG", "", "added " + cmd[1] + " as a mod"});
+                                        } else {
+                                            sendToClient(socket, new String[]{"MSG", "", cmd[1], " was not found!"});
                                         }
                                         break;
                                     case "/online":
@@ -338,6 +351,48 @@ public class Server {
                                         sendToClient(receiver, new String[]{"MSG", "", "Message from " + sender.getNickname() + ": " + endstring});
                                         sendToClient(socket, new String[]{"MSG", "", "Sent message to " + cmd[1]});
                                         break;
+                                    case "/disconnect":
+                                        sendToClient(sender.getSocket(), new String[]{"CMD", "", "DISC"});
+                                        clientcount--;
+                                        clients.remove(sender);
+
+                                        logf("Client %s (%s) disconnected\n", sender.getNickname(), sender.getRemoteAddress());
+                                        sendToAllClients(new String[]{"MSG", "", sender.getNickname() + " left the chat room."});
+
+                                        //Send new clientlist to all players
+                                        String[] clientlist = Arrays.copyOf(getClientNames(), getClientNames().length, String[].class);
+                                        sendToAllClients(ArrayUtils.addAll(new String[]{"CMD", "", "LIST"}, clientlist));
+                                        break;
+                                    case "/clear":
+                                        //Check if mod
+                                        if (!sender.isModerator()) {
+                                            sendToClient(socket, new String[]{"MSG", "", "You're not a mod."});
+                                            break;
+                                        }
+
+                                        sendToAllClients(new String[]{"CMD", "", "CLEAR"});
+                                        sendToClient(socket, new String[]{"MSG", "", "Chat cleared"});
+
+                                        break;
+                                    case "/broadcast":
+                                        //Check if mod
+                                        if (!sender.isModerator()) {
+                                            sendToClient(socket, new String[]{"MSG", "", "You're not a mod."});
+                                            break;
+                                        }
+
+                                        if (cmd.length < 2) {
+                                            sendToClient(socket, new String[]{"MSG", "", "You forgot a message to broadcast"});
+                                            break;
+                                        }
+
+                                        String endstringbroad = "";
+                                        for (int i = 1; i < cmd.length; i++) {
+                                            endstringbroad += cmd[i] + " ";
+                                        }
+
+                                        sendToAllClients(new String[]{"MSG", "", endstringbroad});
+                                        break;
                                     default:
                                         sendToClient(socket, new String[]{"MSG", "", "Command not found."});
                                         break;
@@ -359,9 +414,9 @@ public class Server {
                                         }
                                     }
                                     if (getClient(socket).isModerator()) {
-                                        newpkg[2] = "<MOD> :" + newpkg[2];
+                                        newpkg[2] = "*MOD* > " + newpkg[2];
                                     } else {
-                                        newpkg[2] = " :" + newpkg[2];
+                                        newpkg[2] = " > " + newpkg[2];
                                     }
 
                                     sendToAllClients(newpkg);
@@ -385,7 +440,10 @@ public class Server {
                                     sendToClient(socket, new String[]{"CMD", "", "FULL"});
                                 } else {
                                     ConnectedClient newclient = new ConnectedClient(msg[2], UUID.fromString(msg[1]), socket);
-                                    if (isMod(msg[2])) newclient.setModerator(true);
+                                    if (isMod(newclient.getUniqueId())) {
+                                        newclient.setModerator(true);
+                                        sendToClient(socket, new String[]{"CMD", "", "MODS"});
+                                    }
                                     clientcount++;
                                     clients.add(newclient);
                                     //Send motd to client if motd is set
@@ -459,6 +517,7 @@ public class Server {
                         for (ConnectedClient c : clients) {
                             System.out.print(c.getNickname() + " ");
                         }
+                        System.out.println();
                         if (clients.size() == 0) System.out.println("nobody");
                         break;
                     case "addmod":
@@ -477,8 +536,8 @@ public class Server {
                                         modded = true;
                                         System.out.printf("%s is now a mod!\n", name);
                                         c.setModerator(true);
+                                        moduuids.add(c.getUniqueId());
                                         sendToClient(c.getSocket(), new String[]{"CMD", "", "MODC"});
-                                        mods.add(name);
                                         break;
                                     }
                                 }
@@ -501,20 +560,14 @@ public class Server {
                                         System.out.printf("%s is not a mod!\n", name);
                                         userfound = true;
                                     } else {
-                                        mods.remove(name);
+                                        moduuids.remove(c.getUniqueId());
                                         sendToClient(c.getSocket(), new String[]{"CMD", "", "MODR"});
                                         System.out.printf("%s is no longer a mod!\n", name);
                                         userfound = true;
                                     }
                                 }
                             }
-
-                            if (isMod(name)) {
-                                mods.remove(name);
-                                System.out.printf("%s is no longer a mod!\n", name);
-                                userfound = true;
-                            }
-
+                            //TODO: remove mods when they're not online
                             if (!userfound) System.out.printf("User %s not found!\n", name);
                         }
                         break;
@@ -523,9 +576,9 @@ public class Server {
                         //Save current settings / options and write them to the config
                         cfg.setMaxclients(maxclients);
                         cfg.setMotd(motd);
-                        cfg.setMods(mods);
                         cfg.setPasswordsize(passwordsize);
                         cfg.setBannedclients(bannedclients);
+                        cfg.setModuuids(moduuids);
 
                         String newjson = gson.toJson(cfg);
 
@@ -583,21 +636,17 @@ public class Server {
                     case "getclientlimit":
                         System.out.printf("The client limit is set to %d clients\n", maxclients);
                         break;
-                    case "getmodlist":
-                        if (mods.size() == 0) {
-                            System.out.println("No one is a mod. Add some with addmod <nickname>.");
-                        } else {
-                            for (String client : mods) {
-                                System.out.println(client);
-                            }
-                        }
-                        break;
                     case "ismod":
                         if (cmds.length <= 1) {
                             System.out.println("Whom do you want to check?");
                         } else {
-                            if (isMod(cmds[1])) System.out.printf("%s is a mod\n", cmds[1]);
-                            else System.out.printf("%s is not a mod\n", cmds[1]);
+                            if (isConnected(cmds[1])) {
+                                if (isMod(getClient(cmds[1]).getUniqueId()))
+                                    System.out.printf("%s is a mod\n", cmds[1]);
+                                else System.out.printf("%s is not a mod\n", cmds[1]);
+                            } else {
+                                System.out.printf("%s is not online!\n", cmds[1]);
+                            }
                         }
                         break;
                     case "ban":
@@ -630,7 +679,6 @@ public class Server {
                         System.out.println("removemod <nickname>");
                         System.out.println("ismod <nickname>");
                         System.out.println("isbanned <nickname>");
-                        System.out.println("getmodlist");
                         System.out.println("quit / stop");
                         System.out.println("setmotd <newmotd>");
                         System.out.println("setclientlimit <newlimit>");
@@ -691,8 +739,8 @@ public class Server {
         return false;
     }
 
-    private boolean isMod(String nickname) {
-        if (mods.contains(nickname)) {
+    private boolean isMod(UUID uuid) {
+        if (moduuids.contains(uuid)) {
             return true;
         }
         return false;
@@ -708,11 +756,11 @@ public class Server {
         return false;
     }
 
-    private String[] getClientNames() {
+    protected static String[] getClientNames() {
         String[] temp = new String[clientcount];
 
         int i = 0;
-        for(ConnectedClient c : clients) {
+        for (ConnectedClient c : clients) {
             temp[i] = c.getNickname();
             i++;
         }
@@ -831,4 +879,49 @@ public class Server {
         return false;
     }
 
+}
+
+class TimeoutThread implements Runnable {
+
+    @Override
+    public void run() {
+        while (!Thread.currentThread().isInterrupted()) {
+            for (ConnectedClient c : Server.clients) {
+                ObjectOutputStream out;
+                try {
+                    out = new ObjectOutputStream(c.getSocket().getOutputStream());
+                    out.writeObject(new String[]{"CMD", "","CONTEST"});
+                    out.flush();
+                }
+                catch (IOException e) {
+                    Server.clientcount--;
+                    Server.clients.remove(c);
+
+                    System.out.printf("[LOG] Client %s (%s) has timed out\n", c.getNickname(), c.getRemoteAddress());
+
+                    for (ConnectedClient cl : Server.clients) {
+                        ObjectOutputStream outn;
+                        //Send new clientlist to all players
+                        String[] clientlist = Arrays.copyOf(Server.getClientNames(), Server.getClientNames().length, String[].class);
+                        try {
+                            outn = new ObjectOutputStream(cl.getSocket().getOutputStream());
+                            outn.writeObject(new String[]{"MSG", "", cl.getNickname() + " left the chat room"});
+                            outn.flush();
+                            outn.writeObject(ArrayUtils.addAll(new String[]{"CMD", "", "LIST"}, clientlist));
+                        }
+                        catch (IOException ef) {
+                            ef.printStackTrace();
+                        }
+                    }
+
+                }
+            }
+
+            try {
+                Thread.sleep(10000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 }

@@ -28,7 +28,7 @@ public class ConnectedClient {
         return nickname;
     }
 
-    public UUID getClientid() {
+    public UUID getUniqueId() {
         return clientid;
     }
 

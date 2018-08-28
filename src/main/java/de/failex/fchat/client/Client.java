@@ -2,6 +2,7 @@ package de.failex.fchat.client;
 
 import de.failex.fchat.gui.MainGUI;
 import de.failex.fchat.gui.MainGUIController;
+import de.failex.fchat.server.ConnectedClient;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -201,7 +202,7 @@ public class Client {
 
                                     //Prevent Not an FX Application Thread error
                                     Platform.runLater(() -> {
-                                        MainGUI.alert("Room full", "Romm full!", "Sorry but the chatroom is full", Alert.AlertType.ERROR);
+                                        MainGUI.alert("Room full", "Room full!", "Sorry but the chatroom is full", Alert.AlertType.ERROR);
                                     });
                                     MainGUI.clearChat();
                                     MainGUI.clearClientList();
@@ -294,6 +295,34 @@ public class Client {
                                     }
                                     List<String> clients = Arrays.asList(clientsarray);
                                     c.lv_clients.setItems(FXCollections.observableArrayList(clients));
+                                } else if (msg[2].equals("DISC")) {
+                                    MainGUI.connected = false;
+                                    c.tb_nickname.setDisable(false);
+                                    c.tb_host.setDisable(false);
+                                    c.tb_port.setDisable(false);
+                                    c.btn_connect.setDisable(false);
+
+
+                                    //Disable mod tools
+                                    c.btn_broadcast.setDisable(true);
+                                    c.btn_clear.setDisable(true);
+                                    c.btn_ban.setDisable(true);
+                                    c.btn_kick.setDisable(true);
+                                    c.btn_msg.setDisable(true);
+
+                                    Platform.runLater(() ->  {
+                                        MainGUI.clearChat();
+                                        MainGUI.clearClientList();
+                                    });
+                                } else if (msg[2].equals("MODS")) {
+                                    //Silently enable mod tools
+                                    c.btn_broadcast.setDisable(false);
+                                    c.btn_clear.setDisable(false);
+                                    c.btn_ban.setDisable(false);
+                                    c.btn_kick.setDisable(false);
+                                    c.btn_msg.setDisable(false);
+                                } else if (msg[2].equals("CLEAR")) {
+                                    Platform.runLater(() -> MainGUI.clearChat());
                                 }
                                 break;
                         }
@@ -346,5 +375,4 @@ public class Client {
             }
         }
     }
-
 }
