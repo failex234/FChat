@@ -1,8 +1,8 @@
 package de.failex.fchat.client;
 
+import de.failex.fchat.Cryptography;
 import de.failex.fchat.gui.MainGUI;
 import de.failex.fchat.gui.MainGUIController;
-import de.failex.fchat.server.ConnectedClient;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -11,6 +11,8 @@ import org.apache.commons.lang3.ArrayUtils;
 
 import java.io.*;
 import java.net.*;
+import java.security.*;
+import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -24,6 +26,9 @@ public class Client {
     ObjectOutputStream out;
     MainGUIController c;
 
+    PublicKey pub;
+    PrivateKey priv;
+
     UUID clientid;
 
     final int CLIENTPROTVERSION = 2;
@@ -31,6 +36,7 @@ public class Client {
     public Client(String hostaddress, int port, MainGUIController c, UUID clientid) {
         this.c = c;
         this.clientid = clientid;
+
         try {
             //Check if host is up / hostaddress exists
             InetAddress.getByName(hostaddress);
@@ -49,6 +55,10 @@ public class Client {
             c.btn_msg.setDisable(false);
 
             this.nickname = c.tb_nickname.getText();
+
+            KeyPair kp = Cryptography.readKeys();
+            pub = kp.getPublic();
+            priv = kp.getPrivate();
 
             //Register as client at the server and add the protocol version to ensure that both are using the same protocol
             sendMessage(1,  CLIENTPROTVERSION + "REG");
@@ -103,6 +113,12 @@ public class Client {
             c.btn_msg.setDisable(true);
             MainGUI.connected = false;
             incoming.interrupt();
+        } catch (InvalidKeySpecException e) {
+            printException(e);
+        } catch (NoSuchAlgorithmException e) {
+            printException(e);
+        } catch (ClassNotFoundException e) {
+            printException(e);
         }
     }
 

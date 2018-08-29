@@ -2,11 +2,17 @@ package de.failex.fchat.server;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import de.failex.fchat.Cryptography;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.KeyPair;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.spec.InvalidKeySpecException;
 import java.util.*;
 
 public class Server {
@@ -18,25 +24,28 @@ public class Server {
 
     int port;
     //TODO Should be user definable
-    private int maxclients;
+    private int maxclients = 32;
     protected static int clientcount = 0;
-    private int passwordsize = 8;
 
     protected static ArrayList<ConnectedClient> clients = new ArrayList<>();
 
     private ArrayList<String> bannedclients = new ArrayList<>();
 
-    private File config = new File("config.json");
+    private File config = new File(("data" + File.separator + "servercfg.json").replace(" ", ""));
+    private File datafolder = new File("data");
     private ServerConfig cfg;
     private Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
     private String motd = "";
-    private ArrayList<UUID> moduuids;
+    private ArrayList<UUID> moduuids = new ArrayList<>();
     private final int SERVERPROTVERSION = 2;
 
+    private PublicKey pub;
+    private PrivateKey priv;
+
     public Server(int port) {
-        //TODO Adapt server to new protocol
-        if (config.exists()) {
+        //TODO Save server config on change
+        if (datafolder.exists() && datafolder.isDirectory() && config.exists()) {
             log("Config found, reading config");
             System.out.printf("");
 
@@ -53,6 +62,7 @@ public class Server {
                 maxclients = cfg.getMaxclients();
                 bannedclients = cfg.getBannedclients();
                 moduuids = cfg.getModuuids();
+
             } catch (IOException e) {
                 log("Error reading config");
                 e.printStackTrace();
@@ -60,10 +70,9 @@ public class Server {
 
         } else {
             log("No config found. creating new config...");
+            datafolder.mkdir();
             cfg = new ServerConfig();
             cfg.setMotd("");
-
-            String json = gson.toJson(cfg);
 
             try {
                 config.createNewFile();
@@ -71,12 +80,23 @@ public class Server {
                 e.printStackTrace();
             }
 
-            try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(config), "utf-8"))) {
-                writer.write(json);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            saveConfig();
         }
+
+        try {
+            if (!Cryptography.keysExist()) {
+                KeyPair temp = Cryptography.generateKeyPair();
+                Cryptography.saveKeys(temp.getPublic(), temp.getPrivate());
+            }
+
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InvalidKeySpecException e) {
+            e.printStackTrace();
+        }
+
         this.port = port;
         logf("Server started successfully! listening for connections on port %d", port);
         this.interpreter = new Thread(new InterpreterThread());
@@ -172,6 +192,22 @@ public class Server {
         }
     }
 
+    public void saveConfig() {
+        //Save current settings / options and write them to the config
+        cfg.setMaxclients(maxclients);
+        cfg.setMotd(motd);
+        cfg.setBannedclients(bannedclients);
+        cfg.setModuuids(moduuids);
+
+        String json = gson.toJson(cfg);
+
+        try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(config), "utf-8"))) {
+            writer.write(json);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     /**
      * socket thread that receives the packets and processes them
      */
@@ -238,7 +274,7 @@ public class Server {
                                         sendToClient(socket, new String[]{"MSG", "", "/help - Show this menu"});
                                         break;
                                     case "/ban":
-                                        if (sender.isModerator()) {
+                                        if (!sender.isModerator()) {
                                             sendToClient(socket, new String[]{"MSG", "", "You're not a mod."});
                                             break;
                                         }
@@ -561,6 +597,7 @@ public class Server {
                                         userfound = true;
                                     } else {
                                         moduuids.remove(c.getUniqueId());
+                                        c.setModerator(false);
                                         sendToClient(c.getSocket(), new String[]{"CMD", "", "MODR"});
                                         System.out.printf("%s is no longer a mod!\n", name);
                                         userfound = true;
@@ -576,7 +613,6 @@ public class Server {
                         //Save current settings / options and write them to the config
                         cfg.setMaxclients(maxclients);
                         cfg.setMotd(motd);
-                        cfg.setPasswordsize(passwordsize);
                         cfg.setBannedclients(bannedclients);
                         cfg.setModuuids(moduuids);
 

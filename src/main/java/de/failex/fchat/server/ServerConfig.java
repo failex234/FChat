@@ -9,7 +9,6 @@ public class ServerConfig {
     private String motd = "";
     private ArrayList<UUID> moduuids = new ArrayList<UUID>();
     private int maxclients;
-    private int passwordsize;
     private ArrayList<String> bannedclients = new ArrayList<>();
 
     public String getMotd() {
@@ -27,14 +26,6 @@ public class ServerConfig {
 
     public void setMaxclients(int maxclients) {
         this.maxclients = maxclients;
-    }
-
-    public int getPasswordsize() {
-        return passwordsize;
-    }
-
-    public void setPasswordsize(int passwordsize) {
-        this.passwordsize = passwordsize;
     }
 
     public ArrayList<String> getBannedclients() {

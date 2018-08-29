@@ -2,6 +2,7 @@ package de.failex.fchat.gui;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import de.failex.fchat.Cryptography;
 import de.failex.fchat.client.Client;
 import de.failex.fchat.client.ClientConfig;
 import de.failex.fchat.server.ServerConfig;
@@ -12,13 +13,17 @@ import javafx.scene.control.TextArea;
 import javafx.stage.Stage;
 
 import java.io.*;
+import java.security.KeyPair;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 import java.util.UUID;
 
 public class MainGUI {
 
     public static boolean connected = false;
     private Gson gson = new GsonBuilder().setPrettyPrinting().create();
-    File config = new File("config.json");
+    File config = new File(("data " + File.separator + "clientcfg.json").replace(" ", ""));
+    private File datafolder = new File("data");
     ClientConfig clientcfg;
     UUID clientid;
     static Client cl;
@@ -43,7 +48,7 @@ public class MainGUI {
 
         c.title.setVisible(false);
 
-        if(config.exists()) {
+        if(datafolder.exists() && datafolder.isDirectory() && config.exists()) {
             try (BufferedReader reader = new BufferedReader(new FileReader(config))) {
                 StringBuilder sb = new StringBuilder();
                 String line = reader.readLine();
@@ -55,6 +60,7 @@ public class MainGUI {
                 clientcfg = gson.fromJson(sb.toString(), ClientConfig.class);
                 clientid = clientcfg.getClientid();
                 c.tb_nickname.setText(clientcfg.getNickname());
+
             } catch (IOException e) {
                 StringWriter sw = new StringWriter();
                 PrintWriter pw = new PrintWriter(sw);
@@ -64,6 +70,7 @@ public class MainGUI {
                 alert("Error", "Error while reading config", "Can't load config because of\n" + trace, Alert.AlertType.ERROR);
             }
         } else {
+            datafolder.mkdir();
             clientcfg = new ClientConfig();
             clientid = UUID.randomUUID();
             clientcfg.setClientid(clientid);
@@ -82,6 +89,21 @@ public class MainGUI {
 
             alert("Welcome to FChat!", "First start","Welcome to FChat, the work in progress Chat written in Java!", Alert.AlertType.INFORMATION);
         }
+
+            try {
+                if (!Cryptography.keysExist()) {
+                    KeyPair temp = Cryptography.generateKeyPair();
+                    Cryptography.saveKeys(temp.getPublic(), temp.getPrivate());
+                }
+
+            } catch (NoSuchAlgorithmException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (InvalidKeySpecException e) {
+                e.printStackTrace();
+            }
+
 
         //TODO remove horizontal scrolling !important
 
@@ -150,7 +172,7 @@ public class MainGUI {
 
         c.btn_msg.setOnMouseClicked(event -> {
             String name = (String) c.lv_clients.getSelectionModel().getSelectedItem();
-            if (!name.isEmpty()) {
+            if (name != null && !name.isEmpty()) {
                 cl.sendMessage(0, "/msg " + name + " " + c.tb_msg.getText());
                 c.tb_msg.setText("");
             }
@@ -159,7 +181,7 @@ public class MainGUI {
 
         c.btn_ban.setOnMouseClicked(event -> {
             String name = (String) c.lv_clients.getSelectionModel().getSelectedItem();
-            if (!name.isEmpty()) {
+            if (name != null && !name.isEmpty()) {
                 cl.sendMessage(0, "/ban " + name);
             }
         });
