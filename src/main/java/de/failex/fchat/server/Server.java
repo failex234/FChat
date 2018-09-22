@@ -2,6 +2,7 @@ package de.failex.fchat.server;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import de.failex.fchat.CommonUtils;
 import de.failex.fchat.Cryptography;
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -23,7 +24,6 @@ public class Server {
     private Thread timeouthread = null;
 
     int port;
-    //TODO Should be user definable
     private int maxclients = 32;
     protected static int clientcount = 0;
 
@@ -33,6 +33,7 @@ public class Server {
 
     private File config = new File(("data" + File.separator + "servercfg.json").replace(" ", ""));
     private File datafolder = new File("data");
+    private File lockfile = new File(("data" + File.separator + "fchat.lock").replace(" ", ""));
     private ServerConfig cfg;
     private Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
@@ -43,7 +44,27 @@ public class Server {
     private PublicKey pub;
     private PrivateKey priv;
 
-    public Server(int port) {
+    public Server(int port, boolean forcelaunch) {
+        if (lockfile.exists() && !forcelaunch) {
+            System.err.println("[ERR] An instance of FChat is already running! Refusing to launch.");
+            System.err.println("Or you maybe did not quit the server properly. If you believe this is an error");
+            System.err.println("or you're 100% sure that no instance is running try rerunning the server with the --force flag");
+            System.err.println("ex. FChat 1152 --force");
+            System.exit(1);
+        } else {
+            int pid = CommonUtils.getPID();
+            try {
+                datafolder.mkdir();
+                lockfile.createNewFile();
+                PrintWriter pw = new PrintWriter(lockfile);
+                pw.println(pid);
+                pw.close();
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+                System.err.println("Can't create lockfile. Please make sure the permissions are set correctly!");
+            }
+        }
         //TODO Save server config on change
         if (datafolder.exists() && datafolder.isDirectory() && config.exists()) {
             log("Config found, reading config");
@@ -624,6 +645,7 @@ public class Server {
                             PrintWriter pw = new PrintWriter(config);
                             pw.write(newjson);
                             pw.close();
+                            lockfile.delete();
                         } catch (IOException e) {
                             log("Error while saving config!.");
                             e.printStackTrace();

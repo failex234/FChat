@@ -6,6 +6,7 @@ public class ClientConfig {
 
     private UUID clientid;
     private String nickname;
+    public String type = "CLIENT";
 
     public String getNickname() {
         return nickname;

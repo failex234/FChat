@@ -6,6 +6,7 @@ import java.util.UUID;
 
 public class ServerConfig {
 
+    private String type = "SERVER";
     private String motd = "";
     private ArrayList<UUID> moduuids = new ArrayList<UUID>();
     private int maxclients;

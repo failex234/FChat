@@ -9,14 +9,22 @@ public class FChat {
     public static void main(String[] args) {
         //Start the server when the program starts with an argument
         if (args.length == 0) {
-            (new StartGUI()).runGUI(args);
+            (new StartGUI()).runGUI(args, false);
         } else {
             try {
                 int port = Integer.parseInt(args[0]);
-                new Server(port);
+                if (args.length > 1) {
+                    new Server(port, args[1].equals("--force"));
+                } else {
+                    new Server(port, false);
+                }
             } catch (NumberFormatException e) {
-                System.err.println("invalid port number!");
-                System.exit(1);
+                if (args[1].equals("--force")) {
+                    (new StartGUI()).runGUI(args, true);
+                } else {
+                    System.err.println("invalid port number!");
+                    System.exit(1);
+                }
             }
         }
     }

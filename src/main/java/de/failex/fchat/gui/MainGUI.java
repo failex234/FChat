@@ -2,6 +2,7 @@ package de.failex.fchat.gui;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import de.failex.fchat.CommonUtils;
 import de.failex.fchat.Cryptography;
 import de.failex.fchat.client.Client;
 import de.failex.fchat.client.ClientConfig;
@@ -23,13 +24,34 @@ public class MainGUI {
     public static boolean connected = false;
     private Gson gson = new GsonBuilder().setPrettyPrinting().create();
     File config = new File(("data " + File.separator + "clientcfg.json").replace(" ", ""));
+    File lockfile = new File(("data" + File.separator + "fchat.lock").replace(" ", ""));
     private File datafolder = new File("data");
     ClientConfig clientcfg;
     UUID clientid;
     static Client cl;
     static MainGUIController c;
 
-    public MainGUI(MainGUIController c, Stage stage) {
+    public MainGUI(MainGUIController c, Stage stage, boolean forcelaunch) {
+        if (lockfile.exists() && !forcelaunch) {
+            System.err.println("[ERR] An instance of FChat is already running! Refusing to launch.");
+            System.err.println("If you're sure that no server or client is running you can try");
+            System.err.println("rerunning the client with the --force flag");
+            System.err.println("ex. FChat --force");
+            System.exit(1);
+        } else {
+            datafolder.mkdir();
+            int pid = CommonUtils.getPID();
+            try {
+                lockfile.createNewFile();
+                PrintWriter pw = new PrintWriter(lockfile);
+                pw.println(pid);
+                pw.close();
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+                System.err.println("Can't create lockfile. Please make sure the permissions are set correctly!");
+            }
+        }
 
         //TODO signal handler to save config / to save nickname to config
         this.c = c;
