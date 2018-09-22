@@ -188,7 +188,7 @@ public class MainGUI {
 
         c.btn_kick.setOnMouseClicked(event -> {
             String name = (String) c.lv_clients.getSelectionModel().getSelectedItem();
-            if (!name.isEmpty()) {
+            if (name != null && !name.isEmpty()) {
                 cl.sendMessage(0, "/kick " + name);
             }
         });
