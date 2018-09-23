@@ -19,7 +19,7 @@ public class FChat {
                     new Server(port, false);
                 }
             } catch (NumberFormatException e) {
-                if (args[1].equals("--force")) {
+                if (args[0].equals("--force")) {
                     (new StartGUI()).runGUI(args, true);
                 } else {
                     System.err.println("invalid port number!");

@@ -11,7 +11,7 @@ import java.io.IOException;
 
 public class StartGUI extends Application {
 
-    boolean forcelaunch;
+    static boolean forcelaunch = false;
     MainGUI program;
     File lockfile = new File(("data" + File.separator + "fchat.lock").replace(" ", ""));
 
@@ -35,7 +35,9 @@ public class StartGUI extends Application {
     @Override
     public void stop() {
         MainGUI.disconnect();
-        lockfile.delete();
-
+        //Only delete lockfile when program is not launched with the forced flag
+        if (lockfile.exists() && !forcelaunch) {
+            lockfile.delete();
+        }
     }
 }

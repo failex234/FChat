@@ -38,7 +38,7 @@ public class MainGUI {
             System.err.println("rerunning the client with the --force flag");
             System.err.println("ex. FChat --force");
             System.exit(1);
-        } else {
+        } else if (!lockfile.exists()) {
             datafolder.mkdir();
             int pid = CommonUtils.getPID();
             try {
