@@ -11,12 +11,11 @@ import java.io.IOException;
 
 public class StartGUI extends Application {
 
-    static boolean forcelaunch = false;
-    MainGUI program;
-    File lockfile = new File(("data" + File.separator + "fchat.lock").replace(" ", ""));
+    private static boolean forcelaunch = false;
+    private File lockfile = new File(("data" + File.separator + "fchat.lock").replace(" ", ""));
 
     public void runGUI(String[] args, boolean forcelaunch) {
-        this.forcelaunch = forcelaunch;
+        StartGUI.forcelaunch = forcelaunch;
         launch(args);
     }
 
@@ -28,7 +27,7 @@ public class StartGUI extends Application {
         primaryStage.setTitle("FChat");
         primaryStage.setScene(new Scene(root));
         primaryStage.setResizable(false);
-        program = new MainGUI(loader.getController(), primaryStage, forcelaunch);
+        MainGUI program = new MainGUI(loader.getController(), primaryStage, forcelaunch);
         primaryStage.show();
     }
 

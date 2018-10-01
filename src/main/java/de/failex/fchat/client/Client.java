@@ -20,18 +20,14 @@ import java.util.UUID;
 
 public class Client {
 
-    Thread incoming;
-    Socket server = new Socket();
-    String nickname = "User";
-    ObjectOutputStream out;
-    MainGUIController c;
+    private Thread incoming;
+    private Socket server = new Socket();
+    private String nickname = "User";
+    private MainGUIController c;
 
-    PublicKey pub;
-    PrivateKey priv;
+    private UUID clientid;
 
-    UUID clientid;
-
-    final int CLIENTPROTVERSION = 2;
+    private final int CLIENTPROTVERSION = 2;
     //TODO: implement signal handler and send exit command to server on program exit. Also implement the /exit command
     public Client(String hostaddress, int port, MainGUIController c, UUID clientid) {
         this.c = c;
@@ -57,8 +53,8 @@ public class Client {
             this.nickname = c.tb_nickname.getText();
 
             KeyPair kp = Cryptography.readKeys();
-            pub = kp.getPublic();
-            priv = kp.getPrivate();
+            PublicKey pub = kp.getPublic();
+            PrivateKey priv = kp.getPrivate();
 
             //Register as client at the server and add the protocol version to ensure that both are using the same protocol
             sendMessage(1,  CLIENTPROTVERSION + "REG");
@@ -113,11 +109,7 @@ public class Client {
             c.btn_msg.setDisable(true);
             MainGUI.connected = false;
             incoming.interrupt();
-        } catch (InvalidKeySpecException e) {
-            printException(e);
-        } catch (NoSuchAlgorithmException e) {
-            printException(e);
-        } catch (ClassNotFoundException e) {
+        } catch (InvalidKeySpecException | NoSuchAlgorithmException | ClassNotFoundException e) {
             printException(e);
         }
     }
@@ -132,7 +124,7 @@ public class Client {
     public void sendMessage(int type, String msg, String... extra) {
         String[] temp = ArrayUtils.addAll(new String[]{type == 0 ? "MSG" : "CMD", clientid.toString(), nickname, msg}, extra);
         try {
-            out = new ObjectOutputStream(server.getOutputStream());
+            ObjectOutputStream out = new ObjectOutputStream(server.getOutputStream());
             out.flush();
             out.writeObject(temp);
             out.flush();
@@ -178,7 +170,7 @@ public class Client {
                             case "MSG":
                                 if (!msg[1].isEmpty()) {
                                     String addtolv = "[" + msg[1] + "] " + msg[2];
-                                    ObservableList<String> oldlist = c.lv_msg.getItems();
+                                    ObservableList oldlist = c.lv_msg.getItems();
                                     Platform.runLater(() ->
                                             oldlist.add(addtolv));
                                     c.lv_msg.setItems(oldlist);

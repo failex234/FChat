@@ -310,7 +310,7 @@ public class Server {
                                             break;
                                         }
 
-                                        if (!isMod(getClient(cmd[1]).getUniqueId()) || banClient(cmd[1], false)) {
+                                        if (!isMod(getClient(cmd[1]).getUniqueId()) && banClient(cmd[1], false)) {
                                             sendToClient(socket, new String[]{"MSG", "", "Banned client " + cmd[1]});
                                         } else {
                                             sendToClient(socket, new String[]{"MSG", "", "Can't ban " + cmd[1]});
@@ -333,7 +333,7 @@ public class Server {
                                             break;
                                         }
 
-                                        if (!isMod(getClient(cmd[1]).getUniqueId()) || kickClient(cmd[1], false)) {
+                                        if (!isMod(getClient(cmd[1]).getUniqueId()) && kickClient(cmd[1], false)) {
                                             sendToClient(socket, new String[]{"MSG", "", "Kicked " + cmd[1]});
                                         } else {
                                             sendToClient(socket, new String[]{"MSG", "", "Can't kick " + cmd[1]});
