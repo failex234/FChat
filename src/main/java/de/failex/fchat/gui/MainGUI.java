@@ -27,6 +27,7 @@ public class MainGUI {
     private UUID clientid;
     private static Client cl;
     private static MainGUIController c;
+    private KeyPair kp;
 
     MainGUI(MainGUIController c, Stage stage, boolean forcelaunch) {
         File datafolder = new File("data");
@@ -45,8 +46,7 @@ public class MainGUI {
                 PrintWriter pw = new PrintWriter(lockfile);
                 pw.println(pid);
                 pw.close();
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 e.printStackTrace();
                 System.err.println("Can't create lockfile. Please make sure the permissions are set correctly!");
             }
@@ -71,7 +71,7 @@ public class MainGUI {
 
         File config = new File(("data " + File.separator + "clientcfg.json").replace(" ", ""));
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        if(datafolder.exists() && datafolder.isDirectory() && config.exists()) {
+        if (datafolder.exists() && datafolder.isDirectory() && config.exists()) {
             try (BufferedReader reader = new BufferedReader(new FileReader(config))) {
                 StringBuilder sb = new StringBuilder();
                 String line = reader.readLine();
@@ -110,18 +110,21 @@ public class MainGUI {
                 e.printStackTrace();
             }
 
-            alert("Welcome to FChat!", "First start","Welcome to FChat, the work in progress Chat written in Java!", Alert.AlertType.INFORMATION);
+            alert("Welcome to FChat!", "First start", "Welcome to FChat, the work in progress Chat written in Java!", Alert.AlertType.INFORMATION);
         }
 
-            try {
-                if (!Cryptography.keysExist()) {
-                    KeyPair temp = Cryptography.generateKeyPair();
-                    Cryptography.saveKeys(temp.getPublic(), temp.getPrivate());
-                }
-
-            } catch (NoSuchAlgorithmException | IOException | InvalidKeySpecException e) {
-                e.printStackTrace();
+        try {
+            if (!Cryptography.keysExist()) {
+                KeyPair temp = Cryptography.generateKeyPair();
+                Cryptography.saveKeys(temp.getPublic(), temp.getPrivate());
+                kp = Cryptography.readKeys();
+            } else {
+                kp = Cryptography.readKeys();
             }
+
+        } catch (NoSuchAlgorithmException | IOException | InvalidKeySpecException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
 
 
         //TODO remove horizontal scrolling !important

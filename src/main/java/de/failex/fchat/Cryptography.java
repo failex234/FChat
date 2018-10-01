@@ -57,6 +57,13 @@ public class Cryptography {
         return kpg;
     }
 
+    public static byte[] rsaEncrypt(PrivateKey key, byte[] data) throws NoSuchPaddingException, NoSuchAlgorithmException, BadPaddingException, IllegalBlockSizeException, InvalidKeyException {
+        Cipher cipher = Cipher.getInstance("RSA");
+        cipher.init(Cipher.ENCRYPT_MODE, key);
+        byte[] cipherdata = cipher.doFinal(data);
+        return base64Encode(cipherdata);
+    }
+
     public static byte[] rsaEncrypt(PublicKey key, byte[] data) throws NoSuchPaddingException, NoSuchAlgorithmException, BadPaddingException, IllegalBlockSizeException, InvalidKeyException {
         Cipher cipher = Cipher.getInstance("RSA");
         cipher.init(Cipher.ENCRYPT_MODE, key);
@@ -64,11 +71,22 @@ public class Cryptography {
         return base64Encode(cipherdata);
     }
 
+    public static byte[] rsaDecrypt(PublicKey key, byte[] data) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
+        Cipher cipher = Cipher.getInstance("RSA");
+        cipher.init(Cipher.DECRYPT_MODE, key);
+        byte[] cipherdata = cipher.doFinal(base64Decode(data));
+        return cipherdata;
+    }
+
     public static byte[] rsaDecrypt(PrivateKey key, byte[] data) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
         Cipher cipher = Cipher.getInstance("RSA");
         cipher.init(Cipher.DECRYPT_MODE, key);
         byte[] cipherdata = cipher.doFinal(base64Decode(data));
         return cipherdata;
+    }
+
+    public static String encryptString(PrivateKey key, String string) throws IllegalBlockSizeException, InvalidKeyException, BadPaddingException, NoSuchAlgorithmException, NoSuchPaddingException {
+        return new String(rsaEncrypt(key, string.getBytes()));
     }
 
     private static byte[] base64Encode(byte[] data) {
